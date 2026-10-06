@@ -61,36 +61,57 @@
             <Setter Property="FontWeight" Value="SemiBold" />
         </Style>
 
-        <!-- Fundo da faixa: "pílula" sólida (padrão) ou rebaixo único (contorno + sombra interna). -->
+        <!-- Fundo da faixa: "pílula" sólida (padrão). Nos estilos afundados quem desenha é o InsetSurface;
+             a faixa fica só com alfa mínimo para continuar recebendo o mouse. -->
         <Style x:Key="StripStyle" TargetType="Border">
             <Setter Property="Background" Value="{Binding TaskbarBackgroundBrush}" />
-            <Setter Property="BorderThickness" Value="0" />
             <Style.Triggers>
-                <DataTrigger Binding="{Binding TaskbarBackgroundStyle}" Value="Inset">
-                    <Setter Property="Background" Value="{Binding Palette.InsetFill, RelativeSource={RelativeSource AncestorType=Window}}" />
-                    <Setter Property="BorderBrush" Value="{Binding Palette.InsetBorder, RelativeSource={RelativeSource AncestorType=Window}}" />
-                    <Setter Property="BorderThickness" Value="1" />
-                </DataTrigger>
-                <!-- Os rebaixos ficam em cada gauge; a faixa só precisa de alfa mínimo para receber o mouse. -->
-                <DataTrigger Binding="{Binding TaskbarBackgroundStyle}" Value="InsetPerGauge">
+                <DataTrigger Binding="{Binding IsTaskbarSolidBackground}" Value="False">
                     <Setter Property="Background" Value="#01000000" />
                 </DataTrigger>
             </Style.Triggers>
         </Style>
 
-        <!-- Fundo de cada gauge: só no estilo "um rebaixo por gauge". -->
-        <Style x:Key="ItemStyle" TargetType="Border">
+        <Style x:Key="InsetBase" TargetType="views:InsetSurface">
+            <Setter Property="Visibility" Value="Collapsed" />
+            <Setter Property="Fill" Value="{Binding Palette.InsetFill, RelativeSource={RelativeSource AncestorType=Window}}" />
+            <Setter Property="ShadowColor" Value="{Binding Palette.InsetShadow, RelativeSource={RelativeSource AncestorType=Window}}" />
+            <Setter Property="Highlight" Value="{Binding Palette.InsetHighlight, RelativeSource={RelativeSource AncestorType=Window}}" />
+        </Style>
+
+        <!-- Rebaixo único em volta de todos os gauges. -->
+        <Style x:Key="StripInset" TargetType="views:InsetSurface" BasedOn="{StaticResource InsetBase}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding TaskbarBackgroundStyle}" Value="Inset">
+                    <Setter Property="Visibility" Value="Visible" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Um rebaixo por gauge. -->
+        <Style x:Key="ItemInset" TargetType="views:InsetSurface" BasedOn="{StaticResource InsetBase}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding DataContext.TaskbarBackgroundStyle, RelativeSource={RelativeSource AncestorType=Window}}" Value="InsetPerGauge">
+                    <Setter Property="Visibility" Value="Visible" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Espaço entre gauges e, no estilo por gauge, a folga entre o rebaixo e o conteúdo. -->
+        <Style x:Key="ItemStyle" TargetType="Grid">
             <Setter Property="Margin" Value="3,0" />
-            <Setter Property="Padding" Value="0" />
-            <Setter Property="CornerRadius" Value="6" />
-            <Setter Property="BorderThickness" Value="0" />
             <Style.Triggers>
                 <DataTrigger Binding="{Binding DataContext.TaskbarBackgroundStyle, RelativeSource={RelativeSource AncestorType=Window}}" Value="InsetPerGauge">
                     <Setter Property="Margin" Value="2,0" />
-                    <Setter Property="Padding" Value="2,1,4,1" />
-                    <Setter Property="Background" Value="{Binding Palette.InsetFill, RelativeSource={RelativeSource AncestorType=Window}}" />
-                    <Setter Property="BorderBrush" Value="{Binding Palette.InsetBorder, RelativeSource={RelativeSource AncestorType=Window}}" />
-                    <Setter Property="BorderThickness" Value="1" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="ItemContentStyle" TargetType="StackPanel">
+            <Setter Property="Margin" Value="0" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding DataContext.TaskbarBackgroundStyle, RelativeSource={RelativeSource AncestorType=Window}}" Value="InsetPerGauge">
+                    <Setter Property="Margin" Value="3,3,5,3" />
                 </DataTrigger>
             </Style.Triggers>
         </Style>
@@ -101,7 +122,6 @@
     <Border Style="{StaticResource StripStyle}"
             CornerRadius="6"
             Margin="0,4"
-            Padding="4,0"
             Cursor="SizeWE"
             ToolTip="Arraste para os lados para reposicionar · botão direito abre o menu">
         <Border.ContextMenu>
@@ -116,7 +136,9 @@
         </Border.ContextMenu>
 
         <Grid>
-            <ItemsControl ItemsSource="{Binding Gauges}" VerticalAlignment="Center">
+            <views:InsetSurface Style="{StaticResource StripInset}" />
+
+            <ItemsControl ItemsSource="{Binding Gauges}" VerticalAlignment="Center" Margin="4,0">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
                         <StackPanel Orientation="Horizontal" />
@@ -124,8 +146,9 @@
                 </ItemsControl.ItemsPanel>
                 <ItemsControl.ItemTemplate>
                     <DataTemplate DataType="{x:Type vm:GaugeViewModel}">
-                        <Border Style="{StaticResource ItemStyle}">
-                            <StackPanel Orientation="Horizontal">
+                        <Grid Style="{StaticResource ItemStyle}">
+                            <views:InsetSurface Style="{StaticResource ItemInset}" />
+                            <StackPanel Orientation="Horizontal" Style="{StaticResource ItemContentStyle}">
                                 <StackPanel.ToolTip>
                                     <TextBlock>
                                         <Run Text="{Binding Label, Mode=OneWay}" FontWeight="SemiBold" />
@@ -157,12 +180,12 @@
                                            TextTrimming="CharacterEllipsis"
                                            Style="{StaticResource LabelStyle}" />
                             </StackPanel>
-                        </Border>
+                        </Grid>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
 
-            <TextBlock Margin="6,0"
+            <TextBlock Margin="10,0"
                        VerticalAlignment="Center"
                        Text="HwOverlay: nenhum gauge"
                        Style="{StaticResource LabelStyle}"
