@@ -28,6 +28,7 @@
                 <MenuItem Header="Sensores e configuração..." FontWeight="SemiBold" Click="OpenSensors_Click" />
                 <Separator />
                 <MenuItem Header="Travar (mouse atravessa o overlay)" Click="Lock_Click" />
+                <MenuItem Header="Mover para a barra de tarefas" Click="Taskbar_Click" />
                 <MenuItem Header="Ocultar overlay" Click="Hide_Click" />
                 <Separator />
                 <MenuItem Header="Sair" Click="Exit_Click" />

@@ -12,6 +12,7 @@ public sealed class TrayIconService : IDisposable
     private readonly Forms.NotifyIcon _icon;
     private readonly Forms.ToolStripMenuItem _toggleOverlay;
     private readonly Forms.ToolStripMenuItem _clickThrough;
+    private readonly Forms.ToolStripMenuItem _taskbarMode;
     private bool _disposed;
 
     public TrayIconService()
@@ -35,6 +36,9 @@ public sealed class TrayIconService : IDisposable
         _clickThrough = new Forms.ToolStripMenuItem("Travar overlay (mouse atravessa)") { CheckOnClick = false };
         _clickThrough.Click += (_, _) => ToggleClickThroughRequested?.Invoke(this, EventArgs.Empty);
 
+        _taskbarMode = new Forms.ToolStripMenuItem("Modo barra de tarefas (ultra compacto)") { CheckOnClick = false };
+        _taskbarMode.Click += (_, _) => ToggleTaskbarModeRequested?.Invoke(this, EventArgs.Empty);
+
         var exit = new Forms.ToolStripMenuItem("Sair");
         exit.Click += (_, _) => ExitRequested?.Invoke(this, EventArgs.Empty);
 
@@ -42,6 +46,7 @@ public sealed class TrayIconService : IDisposable
         menu.Items.Add(new Forms.ToolStripSeparator());
         menu.Items.Add(_toggleOverlay);
         menu.Items.Add(_clickThrough);
+        menu.Items.Add(_taskbarMode);
         menu.Items.Add(new Forms.ToolStripSeparator());
         menu.Items.Add(exit);
 
@@ -52,12 +57,15 @@ public sealed class TrayIconService : IDisposable
     public event EventHandler? OpenSensorsRequested;
     public event EventHandler? ToggleOverlayRequested;
     public event EventHandler? ToggleClickThroughRequested;
+    public event EventHandler? ToggleTaskbarModeRequested;
     public event EventHandler? ExitRequested;
 
-    public void SetState(bool overlayVisible, bool clickThrough)
+    public void SetState(bool overlayVisible, bool clickThrough, bool taskbarMode)
     {
         _toggleOverlay.Checked = overlayVisible;
         _clickThrough.Checked = clickThrough;
+        _clickThrough.Enabled = !taskbarMode; // na barra a janela não flutua: travar não se aplica
+        _taskbarMode.Checked = taskbarMode;
     }
 
     public void ShowBalloon(string title, string text)

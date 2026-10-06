@@ -374,6 +374,41 @@
                             </Grid>
                         </StackPanel>
                     </Border>
+
+                    <!-- Modo barra de tarefas (ultra compacto) -->
+                    <Border Style="{StaticResource Card}" DataContext="{Binding Overlay}">
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource CardTitle}" Text="Barra de tarefas" />
+
+                            <CheckBox Content="Modo ultra compacto (mini-gauges na barra de tarefas)" IsChecked="{Binding IsTaskbarMode}"
+                                      ToolTip="Troca o overlay flutuante por mini-gauges sobrepostos à barra de tarefas. Somem sozinhos em tela cheia." />
+
+                            <Grid Margin="0,10,0,0" IsEnabled="{Binding IsTaskbarMode}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="110" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="56" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="30" />
+                                    <RowDefinition Height="30" />
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Grid.Row="0" Style="{StaticResource FieldLabel}" Text="Posição" />
+                                <ComboBox Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2" Margin="0,3"
+                                          ItemsSource="{x:Static vm:OverlayViewModel.TaskbarSideOptions}"
+                                          DisplayMemberPath="Name" SelectedValuePath="Value"
+                                          SelectedValue="{Binding TaskbarSide}" />
+
+                                <TextBlock Grid.Row="1" Style="{StaticResource FieldLabel}" Text="Distância" />
+                                <Slider Grid.Row="1" Grid.Column="1" Minimum="0" Maximum="1200" SmallChange="4" LargeChange="40"
+                                        Value="{Binding TaskbarOffset}"
+                                        ToolTip="Distância até a bandeja (ou até a borda esquerda). Também dá para arrastar os mini-gauges para os lados." />
+                                <TextBlock Grid.Row="1" Grid.Column="2" VerticalAlignment="Center" TextAlignment="Right"
+                                           Text="{Binding TaskbarOffset, StringFormat={}{0:0} px}" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
                 </StackPanel>
             </ScrollViewer>
         </Grid>

@@ -168,6 +168,59 @@ public sealed class OverlayViewModel : ObservableObject
         }
     }
 
+    // ---------- Modo barra de tarefas (ultra compacto) ----------
+
+    public OverlayMode Mode
+    {
+        get => Settings.Mode;
+        set
+        {
+            if (Settings.Mode == value) return;
+            Settings.Mode = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(IsTaskbarMode));
+            Save();
+        }
+    }
+
+    public bool IsTaskbarMode
+    {
+        get => Mode == OverlayMode.Taskbar;
+        set => Mode = value ? OverlayMode.Taskbar : OverlayMode.Floating;
+    }
+
+    public TaskbarSide TaskbarSide
+    {
+        get => Settings.TaskbarSide;
+        set
+        {
+            if (Settings.TaskbarSide == value) return;
+            Settings.TaskbarSide = value;
+            OnPropertyChanged();
+            Save();
+        }
+    }
+
+    public static IReadOnlyList<TaskbarSideOption> TaskbarSideOptions { get; } =
+    [
+        new(TaskbarSide.Right, "Direita (junto à bandeja)"),
+        new(TaskbarSide.Left, "Esquerda"),
+    ];
+
+    /// <summary>Distância (DIPs) até a bandeja ou até a borda esquerda da barra.</summary>
+    public double TaskbarOffset
+    {
+        get => Settings.TaskbarOffset;
+        set
+        {
+            value = Math.Clamp(Math.Round(value), 0, 2000);
+            if (Math.Abs(Settings.TaskbarOffset - value) < 0.5) return;
+            Settings.TaskbarOffset = value;
+            OnPropertyChanged();
+            Save();
+        }
+    }
+
     public int UpdateIntervalMs
     {
         get => Settings.UpdateIntervalMs;
@@ -309,3 +362,5 @@ public sealed class OverlayViewModel : ObservableObject
 
     private void Save() => _settingsService.RequestSave();
 }
+
+public sealed record TaskbarSideOption(TaskbarSide Value, string Name);

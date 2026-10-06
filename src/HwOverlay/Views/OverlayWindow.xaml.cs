@@ -54,6 +54,8 @@ public partial class OverlayWindow : Window
 
     public event EventHandler? ExitRequested;
 
+    public event EventHandler? TaskbarModeRequested;
+
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(OverlayViewModel.ClickThrough))
@@ -149,6 +151,8 @@ public partial class OverlayWindow : Window
         OpenSensorsRequested?.Invoke(this, EventArgs.Empty);
 
     private void Lock_Click(object sender, RoutedEventArgs e) => _vm.ClickThrough = true;
+
+    private void Taskbar_Click(object sender, RoutedEventArgs e) => TaskbarModeRequested?.Invoke(this, EventArgs.Empty);
 
     private void Hide_Click(object sender, RoutedEventArgs e) => _vm.OverlayVisible = false;
 

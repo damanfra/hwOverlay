@@ -9,6 +9,25 @@ public enum GaugeStyle
     Needle,
 }
 
+public enum OverlayMode
+{
+    /// <summary>Janela flutuante com os gauges completos.</summary>
+    Floating,
+
+    /// <summary>Ultra compacto: mini-gauges sobrepostos à barra de tarefas.</summary>
+    Taskbar,
+}
+
+/// <summary>Em que ponta da barra de tarefas os mini-gauges ficam.</summary>
+public enum TaskbarSide
+{
+    /// <summary>Logo à esquerda da bandeja do sistema (relógio, ícones).</summary>
+    Right,
+
+    /// <summary>Junto à borda esquerda da barra.</summary>
+    Left,
+}
+
 /// <summary>Configuração de um gauge do overlay (persistida em settings.json).</summary>
 public sealed class GaugeConfig
 {
@@ -45,6 +64,13 @@ public sealed class AppSettings
     public bool ClickThrough { get; set; }
 
     public bool OverlayVisible { get; set; } = true;
+
+    public OverlayMode Mode { get; set; } = OverlayMode.Floating;
+
+    public TaskbarSide TaskbarSide { get; set; } = TaskbarSide.Right;
+
+    /// <summary>Distância (DIPs) entre os mini-gauges e a ponta escolhida da barra (bandeja ou borda esquerda).</summary>
+    public double TaskbarOffset { get; set; } = 8;
 
     public double OverlayOpacity { get; set; } = 0.92;
 

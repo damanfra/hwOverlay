@@ -3,6 +3,7 @@ using System.IO;
 using System.Windows;
 using System.Windows.Markup;
 using System.Windows.Threading;
+using HwOverlay.Models;
 using HwOverlay.Services;
 using HwOverlay.ViewModels;
 using HwOverlay.Views;
@@ -20,6 +21,7 @@ public partial class App : Application
     private OverlayViewModel? _overlayVm;
     private SensorTreeViewModel? _treeVm;
     private OverlayWindow? _overlayWindow;
+    private TaskbarWindow? _taskbarWindow;
     private SensorTreeWindow? _sensorWindow;
 
     protected override void OnStartup(StartupEventArgs e)
@@ -55,16 +57,23 @@ public partial class App : Application
         _overlayWindow = new OverlayWindow(overlayVm);
         _overlayWindow.OpenSensorsRequested += (_, _) => ShowSensorWindow();
         _overlayWindow.ExitRequested += (_, _) => ExitApp();
+        _overlayWindow.TaskbarModeRequested += (_, _) => overlayVm.Mode = OverlayMode.Taskbar;
+
+        _taskbarWindow = new TaskbarWindow(overlayVm);
+        _taskbarWindow.OpenSensorsRequested += (_, _) => ShowSensorWindow();
+        _taskbarWindow.ExitRequested += (_, _) => ExitApp();
 
         var tray = _tray = new TrayIconService();
         tray.OpenSensorsRequested += (_, _) => ShowSensorWindow();
         tray.ToggleOverlayRequested += (_, _) => overlayVm.OverlayVisible = !overlayVm.OverlayVisible;
         tray.ToggleClickThroughRequested += (_, _) => overlayVm.ClickThrough = !overlayVm.ClickThrough;
+        tray.ToggleTaskbarModeRequested += (_, _) => overlayVm.IsTaskbarMode = !overlayVm.IsTaskbarMode;
         tray.ExitRequested += (_, _) => ExitApp();
 
         overlayVm.PropertyChanged += (_, args) =>
         {
-            if (args.PropertyName is nameof(OverlayViewModel.OverlayVisible) or nameof(OverlayViewModel.ClickThrough))
+            if (args.PropertyName is nameof(OverlayViewModel.OverlayVisible) or nameof(OverlayViewModel.ClickThrough)
+                or nameof(OverlayViewModel.Mode))
                 SyncOverlayVisibility();
 
             if (args.PropertyName == nameof(OverlayViewModel.ClickThrough) && overlayVm.ClickThrough)
@@ -91,9 +100,10 @@ public partial class App : Application
 
     private void SyncOverlayVisibility()
     {
-        if (_overlayWindow is null || _overlayVm is null) return;
+        if (_overlayWindow is null || _taskbarWindow is null || _overlayVm is null) return;
 
-        if (_overlayVm.OverlayVisible)
+        var floating = _overlayVm.OverlayVisible && !_overlayVm.IsTaskbarMode;
+        if (floating)
         {
             if (!_overlayWindow.IsVisible) _overlayWindow.Show();
         }
@@ -102,7 +112,9 @@ public partial class App : Application
             _overlayWindow.Hide();
         }
 
-        _tray?.SetState(_overlayVm.OverlayVisible, _overlayVm.ClickThrough);
+        _taskbarWindow.SetActive(_overlayVm.OverlayVisible && _overlayVm.IsTaskbarMode);
+
+        _tray?.SetState(_overlayVm.OverlayVisible, _overlayVm.ClickThrough, _overlayVm.IsTaskbarMode);
     }
 
     private void ShowSensorWindow()
@@ -128,6 +140,7 @@ public partial class App : Application
         _settings?.SaveNow();
         _sensorWindow?.Close();
         _overlayWindow?.Close();
+        _taskbarWindow?.Close();
         _tray?.Dispose();
         _monitor?.Dispose();
         Shutdown();

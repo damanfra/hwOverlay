@@ -30,9 +30,11 @@ src/HwOverlay
 │   ├── SettingsService        %AppData%\HwOverlay\settings.json (gravação com debounce)
 │   ├── EnvironmentStatus      admin + versão do PawnIO (aviso na janela de sensores)
 │   ├── OverlayWindowHelper    Win32: click-through (WS_EX_TRANSPARENT), fora do Alt+Tab, reforço de topmost
+│   ├── TaskbarLocator         Win32: retângulo da barra de tarefas e da bandeja, ocultação automática, tela cheia
 │   └── TrayIconService        ícone da bandeja (porta de volta quando o overlay está travado)
 ├── ViewModels/                TreeNodes (árvore), SensorTreeViewModel, OverlayViewModel, GaugeViewModel
-├── Views/                     SensorTreeWindow, OverlayWindow, GaugeView
+├── Views/                     SensorTreeWindow, OverlayWindow, GaugeView,
+│                              TaskbarWindow + MiniArc (modo ultra compacto sobre a barra de tarefas)
 └── Themes/Dark.xaml           paleta e estilos (fundo #12161C, destaque #3DDC97)
 ```
 
@@ -64,10 +66,17 @@ Notebook Positivo (placa DN50E-140H_I219V), Intel Core i7-1255U, GPU Intel Iris 
 2. Correções após o primeiro teste: sugestão de RAM pegava `/vram` (corrigido); alternativas automáticas
    (CPU Potência no lugar de GPU Temp em iGPU, SSD Temp no lugar de placa-mãe); botão "Restaurar sugestões";
    nomes claros para memória física/virtual/pentes na árvore; texto da opção "Travar" encurtado.
+3. Branch `feature/modo-barra-tarefas` — protótipo do modo ultra compacto (opção 1 de 3 discutidas):
+   janela sobreposta à barra (o Win11 não tem API de DeskBand), posicionada em pixels físicos via `SetWindowPos`,
+   ancorada na bandeja (`Shell_TrayWnd` → `TrayNotifyWnd`) ou na borda esquerda, com distância ajustável (arrastar).
+   Reafirma topmost a cada 500 ms e quando a barra vira foreground (`SetWinEventHook`); some em tela cheia
+   (`SHQueryUserNotificationState`) e com a barra recolhida (ocultação automática). Só barra horizontal.
 
 ## Pendências / ideias
 
-- Primeiro commit e push para https://github.com/damanfra/hwOverlay.git.
+- Modo barra de tarefas: testar visualmente; depois as outras opções — ícones vivos na bandeja (valor desenhado
+  no ícone) e `TaskbarItemInfo` (selo/progresso no ícone do app). Ainda falta: vários monitores, barra vertical (Win10),
+  tema claro da barra.
 - Conferir visualmente o estilo "Ponteiro" (tamanhos de marcações calculados sem teste visual).
 - Talvez: iniciar com o Windows, atalho global para travar/destravar, mini-gráfico de histórico (sparkline) nos gauges,
   temas de cor, publicar como single-file (`dotnet publish -r win-x64 --self-contained`).
