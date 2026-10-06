@@ -235,6 +235,29 @@ public sealed class OverlayViewModel : ObservableObject
         }
     }
 
+    public TaskbarBackgroundStyle TaskbarBackgroundStyle
+    {
+        get => Settings.TaskbarBackgroundStyle;
+        set
+        {
+            if (Settings.TaskbarBackgroundStyle == value) return;
+            Settings.TaskbarBackgroundStyle = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(IsTaskbarSolidBackground));
+            Save();
+        }
+    }
+
+    /// <summary>A opacidade do fundo só vale para o estilo sólido.</summary>
+    public bool IsTaskbarSolidBackground => TaskbarBackgroundStyle == TaskbarBackgroundStyle.Solid;
+
+    public static IReadOnlyList<TaskbarBackgroundStyleOption> TaskbarBackgroundStyleOptions { get; } =
+    [
+        new(TaskbarBackgroundStyle.Solid, "Sólido"),
+        new(TaskbarBackgroundStyle.Inset, "Afundado (faixa única)"),
+        new(TaskbarBackgroundStyle.InsetPerGauge, "Afundado (um por gauge)"),
+    ];
+
     /// <summary>Mesmo alfa mínimo de 1/255 do overlay: sem ele não daria para arrastar nem abrir o menu.</summary>
     public Brush TaskbarBackgroundBrush => MakeBackground(TaskbarBackgroundOpacity);
 
@@ -395,3 +418,5 @@ public sealed class OverlayViewModel : ObservableObject
 }
 
 public sealed record TaskbarSideOption(TaskbarSide Value, string Name);
+
+public sealed record TaskbarBackgroundStyleOption(TaskbarBackgroundStyle Value, string Name);

@@ -61,10 +61,44 @@
             <Setter Property="FontWeight" Value="SemiBold" />
         </Style>
 
+        <!-- Fundo da faixa: "pílula" sólida (padrão) ou rebaixo único (contorno + sombra interna). -->
+        <Style x:Key="StripStyle" TargetType="Border">
+            <Setter Property="Background" Value="{Binding TaskbarBackgroundBrush}" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding TaskbarBackgroundStyle}" Value="Inset">
+                    <Setter Property="Background" Value="{Binding Palette.InsetFill, RelativeSource={RelativeSource AncestorType=Window}}" />
+                    <Setter Property="BorderBrush" Value="{Binding Palette.InsetBorder, RelativeSource={RelativeSource AncestorType=Window}}" />
+                    <Setter Property="BorderThickness" Value="1" />
+                </DataTrigger>
+                <!-- Os rebaixos ficam em cada gauge; a faixa só precisa de alfa mínimo para receber o mouse. -->
+                <DataTrigger Binding="{Binding TaskbarBackgroundStyle}" Value="InsetPerGauge">
+                    <Setter Property="Background" Value="#01000000" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Fundo de cada gauge: só no estilo "um rebaixo por gauge". -->
+        <Style x:Key="ItemStyle" TargetType="Border">
+            <Setter Property="Margin" Value="3,0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding DataContext.TaskbarBackgroundStyle, RelativeSource={RelativeSource AncestorType=Window}}" Value="InsetPerGauge">
+                    <Setter Property="Margin" Value="2,0" />
+                    <Setter Property="Padding" Value="2,1,4,1" />
+                    <Setter Property="Background" Value="{Binding Palette.InsetFill, RelativeSource={RelativeSource AncestorType=Window}}" />
+                    <Setter Property="BorderBrush" Value="{Binding Palette.InsetBorder, RelativeSource={RelativeSource AncestorType=Window}}" />
+                    <Setter Property="BorderThickness" Value="1" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
     </Window.Resources>
 
     <!-- Margem vertical: a "pílula" não encosta nas bordas da barra. -->
-    <Border Background="{Binding TaskbarBackgroundBrush}"
+    <Border Style="{StaticResource StripStyle}"
             CornerRadius="6"
             Margin="0,4"
             Padding="4,0"
@@ -90,38 +124,40 @@
                 </ItemsControl.ItemsPanel>
                 <ItemsControl.ItemTemplate>
                     <DataTemplate DataType="{x:Type vm:GaugeViewModel}">
-                        <StackPanel Orientation="Horizontal" Margin="3,0">
-                            <StackPanel.ToolTip>
-                                <TextBlock>
-                                    <Run Text="{Binding Label, Mode=OneWay}" FontWeight="SemiBold" />
-                                    <Run Text="{Binding ValueText, Mode=OneWay}" />
-                                    <Run Text="{Binding UnitText, Mode=OneWay}" />
-                                    <LineBreak />
-                                    <Run Text="{Binding SensorName, Mode=OneWay}" />
-                                </TextBlock>
-                            </StackPanel.ToolTip>
-
-                            <Grid Width="{Binding RingSize, RelativeSource={RelativeSource AncestorType=Window}}"
-                                  Height="{Binding RingSize, RelativeSource={RelativeSource AncestorType=Window}}">
-                                <views:MiniArc Fraction="{Binding Fraction}" Style="{StaticResource ArcStyle}" />
-                                <!-- Valor + unidade compacta ("42°", "7%", "5W") dentro do anel. -->
-                                <TextBlock HorizontalAlignment="Center"
-                                           VerticalAlignment="Center"
-                                           Margin="0,1,0,0"
-                                           Style="{StaticResource ValueStyle}">
-                                    <Run Text="{Binding ValueText, Mode=OneWay}" /><Run
-                                        Text="{Binding CompactUnitText, Mode=OneWay}"
-                                        FontWeight="Normal"
-                                        FontSize="{Binding UnitFontSize, RelativeSource={RelativeSource AncestorType=Window}}" />
-                                </TextBlock>
-                            </Grid>
-                            <TextBlock VerticalAlignment="Center"
-                                       Margin="4,0,2,0"
-                                       Text="{Binding TaskbarLabel}"
-                                       MaxWidth="64"
-                                       TextTrimming="CharacterEllipsis"
-                                       Style="{StaticResource LabelStyle}" />
-                        </StackPanel>
+                        <Border Style="{StaticResource ItemStyle}">
+                            <StackPanel Orientation="Horizontal">
+                                <StackPanel.ToolTip>
+                                    <TextBlock>
+                                        <Run Text="{Binding Label, Mode=OneWay}" FontWeight="SemiBold" />
+                                        <Run Text="{Binding ValueText, Mode=OneWay}" />
+                                        <Run Text="{Binding UnitText, Mode=OneWay}" />
+                                        <LineBreak />
+                                        <Run Text="{Binding SensorName, Mode=OneWay}" />
+                                    </TextBlock>
+                                </StackPanel.ToolTip>
+    
+                                <Grid Width="{Binding RingSize, RelativeSource={RelativeSource AncestorType=Window}}"
+                                      Height="{Binding RingSize, RelativeSource={RelativeSource AncestorType=Window}}">
+                                    <views:MiniArc Fraction="{Binding Fraction}" Style="{StaticResource ArcStyle}" />
+                                    <!-- Valor + unidade compacta ("42°", "7%", "5W") dentro do anel. -->
+                                    <TextBlock HorizontalAlignment="Center"
+                                               VerticalAlignment="Center"
+                                               Margin="0,1,0,0"
+                                               Style="{StaticResource ValueStyle}">
+                                        <Run Text="{Binding ValueText, Mode=OneWay}" /><Run
+                                            Text="{Binding CompactUnitText, Mode=OneWay}"
+                                            FontWeight="Normal"
+                                            FontSize="{Binding UnitFontSize, RelativeSource={RelativeSource AncestorType=Window}}" />
+                                    </TextBlock>
+                                </Grid>
+                                <TextBlock VerticalAlignment="Center"
+                                           Margin="4,0,2,0"
+                                           Text="{Binding TaskbarLabel}"
+                                           MaxWidth="64"
+                                           TextTrimming="CharacterEllipsis"
+                                           Style="{StaticResource LabelStyle}" />
+                            </StackPanel>
+                        </Border>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>

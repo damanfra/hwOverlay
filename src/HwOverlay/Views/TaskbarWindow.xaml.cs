@@ -221,7 +221,7 @@ public partial class TaskbarWindow : Window
     {
         if (e.PropertyName is nameof(OverlayViewModel.TaskbarSide) or nameof(OverlayViewModel.TaskbarOffset))
             UpdatePlacement();
-        else if (e.PropertyName == nameof(OverlayViewModel.TaskbarBackgroundOpacity))
+        else if (e.PropertyName is nameof(OverlayViewModel.TaskbarBackgroundOpacity) or nameof(OverlayViewModel.TaskbarBackgroundStyle))
             UpdatePalette();
     }
 
@@ -229,13 +229,14 @@ public partial class TaskbarWindow : Window
         Dispatcher.InvokeAsync(UpdatePalette);
 
     /// <summary>
-    /// Com fundo próprio forte (≥ 50%) a "pílula" escura domina e vale a paleta escura;
-    /// abaixo disso o texto fica direto sobre a barra e segue o tema dela.
+    /// Com fundo sólido forte (≥ 50%) a "pílula" escura domina e vale a paleta escura;
+    /// abaixo disso — e nos estilos afundados, que são translúcidos — o texto fica sobre a barra e segue o tema dela.
     /// </summary>
-    private void UpdatePalette() =>
-        Palette = _vm.TaskbarBackgroundOpacity < 0.5 && TaskbarLocator.IsTaskbarLight()
-            ? TaskbarPalette.Light
-            : TaskbarPalette.Dark;
+    private void UpdatePalette()
+    {
+        var overTaskbar = !_vm.IsTaskbarSolidBackground || _vm.TaskbarBackgroundOpacity < 0.5;
+        Palette = overTaskbar && TaskbarLocator.IsTaskbarLight() ? TaskbarPalette.Light : TaskbarPalette.Dark;
+    }
 
     // ---------- Arrastar para os lados ajusta a distância ----------
 

@@ -28,6 +28,19 @@ public enum TaskbarSide
     Left,
 }
 
+/// <summary>Como é o fundo dos mini-gauges na barra de tarefas.</summary>
+public enum TaskbarBackgroundStyle
+{
+    /// <summary>"Pílula" escura com a opacidade escolhida (0% = sem fundo).</summary>
+    Solid,
+
+    /// <summary>Um rebaixo só (contorno + sombra interna) em volta de todos os gauges.</summary>
+    Inset,
+
+    /// <summary>Um rebaixo para cada gauge.</summary>
+    InsetPerGauge,
+}
+
 /// <summary>Configuração de um gauge do overlay (persistida em settings.json).</summary>
 public sealed class GaugeConfig
 {
@@ -80,6 +93,8 @@ public sealed class AppSettings
 
     /// <summary>Opacidade do fundo dos mini-gauges (0 = direto sobre a barra, cores seguem o tema dela).</summary>
     public double TaskbarBackgroundOpacity { get; set; }
+
+    public TaskbarBackgroundStyle TaskbarBackgroundStyle { get; set; } = TaskbarBackgroundStyle.Solid;
 
     /// <summary>Um ícone por gauge na bandeja do sistema, com o valor desenhado nele.</summary>
     public bool TrayIconsEnabled { get; set; }

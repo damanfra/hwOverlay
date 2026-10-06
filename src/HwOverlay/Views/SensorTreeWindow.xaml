@@ -413,13 +413,22 @@
                                     <RowDefinition Height="30" />
                                     <RowDefinition Height="30" />
                                     <RowDefinition Height="30" />
+                                    <RowDefinition Height="30" />
                                 </Grid.RowDefinitions>
 
-                                <TextBlock Grid.Row="2" Style="{StaticResource FieldLabel}" Text="Fundo" />
-                                <Slider Grid.Row="2" Grid.Column="1" Minimum="0" Maximum="1" SmallChange="0.05" LargeChange="0.1"
+                                <TextBlock Grid.Row="2" Style="{StaticResource FieldLabel}" Text="Estilo do fundo" />
+                                <ComboBox Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" Margin="0,3"
+                                          ItemsSource="{x:Static vm:OverlayViewModel.TaskbarBackgroundStyleOptions}"
+                                          DisplayMemberPath="Name" SelectedValuePath="Value"
+                                          SelectedValue="{Binding TaskbarBackgroundStyle}"
+                                          ToolTip="Afundado: contorno com sombra interna, como se os gauges estivessem num rebaixo da barra." />
+
+                                <TextBlock Grid.Row="3" Style="{StaticResource FieldLabel}" Text="Fundo" />
+                                <Slider Grid.Row="3" Grid.Column="1" Minimum="0" Maximum="1" SmallChange="0.05" LargeChange="0.1"
                                         Value="{Binding TaskbarBackgroundOpacity}"
-                                        ToolTip="Abaixo de 50% as cores dos textos acompanham o tema da barra (claro/escuro)." />
-                                <TextBlock Grid.Row="2" Grid.Column="2" VerticalAlignment="Center" TextAlignment="Right"
+                                        IsEnabled="{Binding IsTaskbarSolidBackground}"
+                                        ToolTip="Só para o estilo sólido. Abaixo de 50% as cores dos textos acompanham o tema da barra (claro/escuro)." />
+                                <TextBlock Grid.Row="3" Grid.Column="2" VerticalAlignment="Center" TextAlignment="Right"
                                            Text="{Binding TaskbarBackgroundOpacity, Converter={StaticResource Percent}}" />
 
                                 <TextBlock Grid.Row="0" Style="{StaticResource FieldLabel}" Text="Posição" />
