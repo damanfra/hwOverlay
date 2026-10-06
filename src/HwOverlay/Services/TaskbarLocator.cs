@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using Microsoft.Win32;
 
 namespace HwOverlay.Services;
 
@@ -57,6 +58,32 @@ public static class TaskbarLocator
     {
         if (SHQueryUserNotificationState(out var state) != 0) return false;
         return state is QUNS_BUSY or QUNS_RUNNING_D3D_FULL_SCREEN or QUNS_PRESENTATION_MODE;
+    }
+
+    /// <summary>
+    /// A barra está clara? Segue "modo do Windows" (SystemUsesLightTheme). Com a cor de destaque
+    /// aplicada à barra (ColorPrevalence, só no tema escuro), decide pela luminância do destaque.
+    /// </summary>
+    public static bool IsTaskbarLight()
+    {
+        try
+        {
+            using var personalize = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize");
+            var light = personalize?.GetValue("SystemUsesLightTheme") is int l && l != 0;
+            var accentOnTaskbar = personalize?.GetValue("ColorPrevalence") is int p && p != 0;
+            if (light || !accentOnTaskbar) return light;
+
+            using var accent = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Explorer\Accent");
+            if (accent?.GetValue("AccentColorMenu") is not int abgr) return false;
+
+            // ABGR → luminância relativa aproximada.
+            double r = abgr & 0xFF, g = (abgr >> 8) & 0xFF, b = (abgr >> 16) & 0xFF;
+            return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255 > 0.6;
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     /// <summary>Janela da barra de tarefas (para detectar quando ela vem para a frente).</summary>

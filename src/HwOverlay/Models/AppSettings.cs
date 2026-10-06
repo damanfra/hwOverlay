@@ -72,6 +72,9 @@ public sealed class AppSettings
     /// <summary>Distância (DIPs) entre os mini-gauges e a ponta escolhida da barra (bandeja ou borda esquerda).</summary>
     public double TaskbarOffset { get; set; } = 8;
 
+    /// <summary>Opacidade do fundo dos mini-gauges (0 = direto sobre a barra, cores seguem o tema dela).</summary>
+    public double TaskbarBackgroundOpacity { get; set; }
+
     public double OverlayOpacity { get; set; } = 0.92;
 
     /// <summary>Opacidade só do fundo do overlay (0 = só os gauges flutuando).</summary>

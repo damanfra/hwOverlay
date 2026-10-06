@@ -7,6 +7,7 @@ using System.Windows.Threading;
 using HwOverlay.Models;
 using HwOverlay.Services;
 using HwOverlay.ViewModels;
+using Microsoft.Win32;
 
 namespace HwOverlay.Views;
 
@@ -28,6 +29,9 @@ public partial class TaskbarWindow : Window
 
     public static readonly DependencyProperty LabelFontSizeProperty =
         DependencyProperty.Register(nameof(LabelFontSize), typeof(double), typeof(TaskbarWindow), new PropertyMetadata(10.5));
+
+    public static readonly DependencyProperty PaletteProperty =
+        DependencyProperty.Register(nameof(Palette), typeof(TaskbarPalette), typeof(TaskbarWindow), new PropertyMetadata(TaskbarPalette.Dark));
 
     private const uint EVENT_SYSTEM_FOREGROUND = 0x0003;
     private const uint WINEVENT_OUTOFCONTEXT = 0x0000;
@@ -56,6 +60,10 @@ public partial class TaskbarWindow : Window
 
         _vm.PropertyChanged += OnViewModelPropertyChanged;
 
+        // Trocar o tema do Windows (claro/escuro, cor de destaque) muda a cor da barra.
+        SystemEvents.UserPreferenceChanged += OnUserPreferenceChanged;
+        UpdatePalette();
+
         // Acompanha mudanças da barra (bandeja cresce, DPI, ocultação automática, tela cheia).
         _timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
         _timer.Tick += (_, _) => UpdatePlacement();
@@ -67,6 +75,7 @@ public partial class TaskbarWindow : Window
         {
             SetActive(false);
             _vm.PropertyChanged -= OnViewModelPropertyChanged;
+            SystemEvents.UserPreferenceChanged -= OnUserPreferenceChanged; // evento estático: sem isso, vaza
         };
     }
 
@@ -96,6 +105,12 @@ public partial class TaskbarWindow : Window
     {
         get => (double)GetValue(LabelFontSizeProperty);
         set => SetValue(LabelFontSizeProperty, value);
+    }
+
+    public TaskbarPalette Palette
+    {
+        get => (TaskbarPalette)GetValue(PaletteProperty);
+        set => SetValue(PaletteProperty, value);
     }
 
     /// <summary>Liga/desliga o modo. Mesmo ativo, a janela some sozinha quando a barra não está visível.</summary>
@@ -196,7 +211,21 @@ public partial class TaskbarWindow : Window
     {
         if (e.PropertyName is nameof(OverlayViewModel.TaskbarSide) or nameof(OverlayViewModel.TaskbarOffset))
             UpdatePlacement();
+        else if (e.PropertyName == nameof(OverlayViewModel.TaskbarBackgroundOpacity))
+            UpdatePalette();
     }
+
+    private void OnUserPreferenceChanged(object sender, UserPreferenceChangedEventArgs e) =>
+        Dispatcher.InvokeAsync(UpdatePalette);
+
+    /// <summary>
+    /// Com fundo próprio forte (≥ 50%) a "pílula" escura domina e vale a paleta escura;
+    /// abaixo disso o texto fica direto sobre a barra e segue o tema dela.
+    /// </summary>
+    private void UpdatePalette() =>
+        Palette = _vm.TaskbarBackgroundOpacity < 0.5 && TaskbarLocator.IsTaskbarLight()
+            ? TaskbarPalette.Light
+            : TaskbarPalette.Dark;
 
     // ---------- Arrastar para os lados ajusta a distância ----------
 

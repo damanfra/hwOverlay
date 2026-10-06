@@ -71,6 +71,9 @@ Notebook Positivo (placa DN50E-140H_I219V), Intel Core i7-1255U, GPU Intel Iris 
    ancorada na bandeja (`Shell_TrayWnd` → `TrayNotifyWnd`) ou na borda esquerda, com distância ajustável (arrastar).
    Reafirma topmost a cada 500 ms e quando a barra vira foreground (`SetWinEventHook`); some em tela cheia
    (`SHQueryUserNotificationState`) e com a barra recolhida (ocultação automática). Só barra horizontal.
+   Primeiro teste aprovado (capturas/captura01.png). Depois: fundo próprio (`TaskbarBackgroundOpacity`, padrão 0%)
+   e paleta clara/escura (`TaskbarPalette`) conforme o tema da barra — a barra desta máquina é clara
+   (`SystemUsesLightTheme = 1`), e texto branco sem fundo sumia (captura02.png).
 
 ## Pendências / ideias
 

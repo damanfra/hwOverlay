@@ -42,7 +42,6 @@ public sealed class GaugeViewModel : ObservableObject
     private static readonly Brush NormalBrush = Freeze(new SolidColorBrush(Color.FromRgb(0xE6, 0xEA, 0xF0)));
     private static readonly Brush WarningBrush = Freeze(new SolidColorBrush(Color.FromRgb(0xFF, 0xB5, 0x47)));
     private static readonly Brush CriticalBrush = Freeze(new SolidColorBrush(Color.FromRgb(0xFF, 0x5C, 0x5C)));
-    private static readonly Brush AccentBrush = Freeze(new SolidColorBrush(Color.FromRgb(0x3D, 0xDC, 0x97)));
 
     private readonly GaugeConfig _config;
     private readonly ObservableValue _arcValue = new(0);
@@ -167,7 +166,6 @@ public sealed class GaugeViewModel : ObservableObject
         {
             if (!SetProperty(ref _state, value)) return;
             OnPropertyChanged(nameof(StateBrush));
-            OnPropertyChanged(nameof(ArcBrush));
             if (_arcSeries is not null) _arcSeries.Fill = new SolidColorPaint(StateColor(value));
         }
     }
@@ -178,15 +176,6 @@ public sealed class GaugeViewModel : ObservableObject
         GaugeState.Critical => CriticalBrush,
         GaugeState.NoData => NoDataBrush,
         _ => NormalBrush,
-    };
-
-    /// <summary>Cor do arco (verde no estado normal) — usada pelos mini-gauges da barra de tarefas.</summary>
-    public Brush ArcBrush => _state switch
-    {
-        GaugeState.Warning => WarningBrush,
-        GaugeState.Critical => CriticalBrush,
-        GaugeState.NoData => NoDataBrush,
-        _ => AccentBrush,
     };
 
     /// <summary>Posição do valor na faixa Min..Max, de 0 a 1.</summary>

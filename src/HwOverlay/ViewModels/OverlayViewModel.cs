@@ -116,15 +116,14 @@ public sealed class OverlayViewModel : ObservableObject
     /// Fundo do overlay. Alfa mínimo de 1/255: pixels 100% transparentes não recebem clique
     /// em janelas WPF transparentes, e aí não daria para arrastar.
     /// </summary>
-    public Brush BackgroundBrush
+    public Brush BackgroundBrush => MakeBackground(BackgroundOpacity);
+
+    private static Brush MakeBackground(double opacity)
     {
-        get
-        {
-            var alpha = (byte)Math.Clamp(Math.Round(BackgroundOpacity * 255), 1, 255);
-            var brush = new SolidColorBrush(Color.FromArgb(alpha, 0x10, 0x14, 0x1A));
-            brush.Freeze();
-            return brush;
-        }
+        var alpha = (byte)Math.Clamp(Math.Round(opacity * 255), 1, 255);
+        var brush = new SolidColorBrush(Color.FromArgb(alpha, 0x10, 0x14, 0x1A));
+        brush.Freeze();
+        return brush;
     }
 
     public int Columns
@@ -220,6 +219,24 @@ public sealed class OverlayViewModel : ObservableObject
             Save();
         }
     }
+
+    /// <summary>Fundo próprio dos mini-gauges; abaixo de 50% as cores seguem o tema da barra.</summary>
+    public double TaskbarBackgroundOpacity
+    {
+        get => Settings.TaskbarBackgroundOpacity;
+        set
+        {
+            value = Math.Clamp(value, 0, 1);
+            if (Math.Abs(Settings.TaskbarBackgroundOpacity - value) < 0.001) return;
+            Settings.TaskbarBackgroundOpacity = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(TaskbarBackgroundBrush));
+            Save();
+        }
+    }
+
+    /// <summary>Mesmo alfa mínimo de 1/255 do overlay: sem ele não daria para arrastar nem abrir o menu.</summary>
+    public Brush TaskbarBackgroundBrush => MakeBackground(TaskbarBackgroundOpacity);
 
     public int UpdateIntervalMs
     {

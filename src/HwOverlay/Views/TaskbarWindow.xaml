@@ -7,7 +7,6 @@
         xmlns:vm="clr-namespace:HwOverlay.ViewModels"
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance Type=vm:OverlayViewModel}"
-        x:Name="Self"
         Title="HwOverlay — barra de tarefas"
         WindowStyle="None"
         AllowsTransparency="True"
@@ -20,8 +19,56 @@
         ShowActivated="False"
         FontFamily="Segoe UI">
 
+    <Window.Resources>
+        <!-- Cores por estado, vindas da paleta da janela (clara/escura conforme a barra). -->
+        <Style x:Key="ArcStyle" TargetType="views:MiniArc">
+            <Setter Property="Stroke" Value="{Binding Palette.Accent, RelativeSource={RelativeSource AncestorType=Window}}" />
+            <Setter Property="Track" Value="{Binding Palette.Track, RelativeSource={RelativeSource AncestorType=Window}}" />
+            <Setter Property="Thickness" Value="{Binding RingThickness, RelativeSource={RelativeSource AncestorType=Window}}" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding State}" Value="{x:Static vm:GaugeState.Warning}">
+                    <Setter Property="Stroke" Value="{Binding Palette.Warning, RelativeSource={RelativeSource AncestorType=Window}}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding State}" Value="{x:Static vm:GaugeState.Critical}">
+                    <Setter Property="Stroke" Value="{Binding Palette.Critical, RelativeSource={RelativeSource AncestorType=Window}}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding State}" Value="{x:Static vm:GaugeState.NoData}">
+                    <Setter Property="Stroke" Value="{Binding Palette.NoData, RelativeSource={RelativeSource AncestorType=Window}}" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="ValueStyle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{Binding Palette.Text, RelativeSource={RelativeSource AncestorType=Window}}" />
+            <Setter Property="FontSize" Value="{Binding ValueFontSize, RelativeSource={RelativeSource AncestorType=Window}}" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding State}" Value="{x:Static vm:GaugeState.Warning}">
+                    <Setter Property="Foreground" Value="{Binding Palette.Warning, RelativeSource={RelativeSource AncestorType=Window}}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding State}" Value="{x:Static vm:GaugeState.Critical}">
+                    <Setter Property="Foreground" Value="{Binding Palette.Critical, RelativeSource={RelativeSource AncestorType=Window}}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding State}" Value="{x:Static vm:GaugeState.NoData}">
+                    <Setter Property="Foreground" Value="{Binding Palette.NoData, RelativeSource={RelativeSource AncestorType=Window}}" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="LabelStyle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{Binding Palette.Label, RelativeSource={RelativeSource AncestorType=Window}}" />
+            <Setter Property="FontSize" Value="{Binding LabelFontSize, RelativeSource={RelativeSource AncestorType=Window}}" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+
+        <Style x:Key="UnitStyle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{Binding Palette.Muted, RelativeSource={RelativeSource AncestorType=Window}}" />
+            <Setter Property="FontSize" Value="{Binding LabelFontSize, RelativeSource={RelativeSource AncestorType=Window}}" />
+        </Style>
+    </Window.Resources>
+
     <!-- Margem vertical: a "pílula" não encosta nas bordas da barra. -->
-    <Border Background="{Binding BackgroundBrush}"
+    <Border Background="{Binding TaskbarBackgroundBrush}"
             CornerRadius="6"
             Margin="0,4"
             Padding="4,0"
@@ -48,28 +95,21 @@
                 <ItemsControl.ItemTemplate>
                     <DataTemplate DataType="{x:Type vm:GaugeViewModel}">
                         <StackPanel Orientation="Horizontal" Margin="3,0" ToolTip="{Binding SensorName}">
-                            <Grid Width="{Binding RingSize, ElementName=Self}" Height="{Binding RingSize, ElementName=Self}">
-                                <views:MiniArc Fraction="{Binding Fraction}"
-                                               Stroke="{Binding ArcBrush}"
-                                               Thickness="{Binding RingThickness, ElementName=Self}" />
+                            <Grid Width="{Binding RingSize, RelativeSource={RelativeSource AncestorType=Window}}"
+                                  Height="{Binding RingSize, RelativeSource={RelativeSource AncestorType=Window}}">
+                                <views:MiniArc Fraction="{Binding Fraction}" Style="{StaticResource ArcStyle}" />
                                 <TextBlock HorizontalAlignment="Center"
                                            VerticalAlignment="Center"
                                            Margin="0,1,0,0"
                                            Text="{Binding ValueText}"
-                                           FontSize="{Binding ValueFontSize, ElementName=Self}"
-                                           FontWeight="SemiBold"
-                                           Foreground="{Binding StateBrush}" />
+                                           Style="{StaticResource ValueStyle}" />
                             </Grid>
                             <StackPanel VerticalAlignment="Center" Margin="3,0,2,0">
                                 <TextBlock Text="{Binding Label}"
                                            MaxWidth="64"
                                            TextTrimming="CharacterEllipsis"
-                                           FontSize="{Binding LabelFontSize, ElementName=Self}"
-                                           FontWeight="SemiBold"
-                                           Foreground="#C7CED8" />
-                                <TextBlock Text="{Binding UnitText}"
-                                           FontSize="{Binding LabelFontSize, ElementName=Self}"
-                                           Foreground="#8C96A5" />
+                                           Style="{StaticResource LabelStyle}" />
+                                <TextBlock Text="{Binding UnitText}" Style="{StaticResource UnitStyle}" />
                             </StackPanel>
                         </StackPanel>
                     </DataTemplate>
@@ -78,8 +118,8 @@
 
             <TextBlock Margin="6,0"
                        VerticalAlignment="Center"
-                       Foreground="#C7CED8"
                        Text="HwOverlay: nenhum gauge"
+                       Style="{StaticResource LabelStyle}"
                        Visibility="{Binding HasGauges, Converter={StaticResource BoolToVisibility}, ConverterParameter=invert}" />
         </Grid>
     </Border>
