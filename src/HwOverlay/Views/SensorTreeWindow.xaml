@@ -1,0 +1,391 @@
+<Window x:Class="HwOverlay.Views.SensorTreeWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:HwOverlay.ViewModels"
+        mc:Ignorable="d"
+        d:DataContext="{d:DesignInstance Type=vm:SensorTreeViewModel}"
+        Title="HwOverlay — Sensores"
+        Width="1180" Height="760"
+        MinWidth="900" MinHeight="520"
+        WindowStartupLocation="CenterScreen"
+        Background="{StaticResource BgBrush}"
+        Foreground="{StaticResource TextBrush}"
+        FontFamily="Segoe UI"
+        FontSize="13"
+        Icon="/Assets/app.ico">
+
+    <Grid Margin="14">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />  <!-- cabeçalho -->
+            <RowDefinition Height="Auto" />  <!-- aviso PawnIO/admin -->
+            <RowDefinition Height="Auto" />  <!-- barra de ferramentas -->
+            <RowDefinition Height="*" />     <!-- árvore + painel -->
+            <RowDefinition Height="Auto" />  <!-- rodapé -->
+        </Grid.RowDefinitions>
+
+        <!-- ===================== Cabeçalho ===================== -->
+        <DockPanel Grid.Row="0" Margin="0,0,0,10">
+            <TextBlock DockPanel.Dock="Right" VerticalAlignment="Bottom"
+                       Foreground="{StaticResource MutedBrush}" Text="{Binding StatusText}" />
+            <StackPanel>
+                <TextBlock FontSize="20" FontWeight="SemiBold" Text="Sensores detectados" />
+                <TextBlock Foreground="{StaticResource MutedBrush}"
+                           Text="Tudo o que o LibreHardwareMonitor consegue ler nesta máquina. Duplo clique num sensor para colocá-lo no overlay." />
+            </StackPanel>
+        </DockPanel>
+
+        <!-- ===================== Aviso ===================== -->
+        <Border Grid.Row="1" Margin="0,0,0,10" Padding="12,10" CornerRadius="8"
+                Background="#2A2416" BorderBrush="{StaticResource WarnBrush}" BorderThickness="1"
+                Visibility="{Binding HasWarning, Converter={StaticResource BoolToVisibility}}">
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" Margin="12,0,0,0">
+                    <Button Content="Copiar comando winget" Command="{Binding CopyWingetCommand}" />
+                    <Button Content="Abrir pawnio.eu" Command="{Binding OpenPawnIoSiteCommand}" Margin="0" />
+                </StackPanel>
+                <TextBlock TextWrapping="Wrap" Foreground="{StaticResource WarnBrush}" Text="{Binding Warning}" />
+            </DockPanel>
+        </Border>
+
+        <!-- ===================== Ferramentas ===================== -->
+        <DockPanel Grid.Row="2" Margin="0,0,0,10" LastChildFill="False">
+            <TextBlock DockPanel.Dock="Left" Text="Filtrar:" Style="{StaticResource FieldLabel}" />
+            <TextBox DockPanel.Dock="Left" Width="260" Margin="0,0,12,0"
+                     Text="{Binding FilterText, UpdateSourceTrigger=PropertyChanged}"
+                     ToolTip="Ex.: temp, core, gpu, fan..." />
+            <Button DockPanel.Dock="Left" Content="Expandir tudo" Command="{Binding ExpandAllCommand}" />
+            <Button DockPanel.Dock="Left" Content="Recolher" Command="{Binding CollapseAllCommand}" />
+
+            <Button DockPanel.Dock="Right" Content="Salvar relatório completo" Command="{Binding SaveReportCommand}" Margin="0"
+                    ToolTip="Relatório técnico do LibreHardwareMonitor (útil para diagnosticar sensores faltando)." />
+            <Button DockPanel.Dock="Right" Content="Copiar lista de sensores" Command="{Binding CopySensorListCommand}"
+                    ToolTip="Copia todos os sensores com valores e IDs, em texto, para colar onde quiser." />
+        </DockPanel>
+
+        <!-- ===================== Árvore + painel ===================== -->
+        <Grid Grid.Row="3">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" MinWidth="420" />
+                <ColumnDefinition Width="10" />
+                <ColumnDefinition Width="380" MinWidth="320" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Árvore -->
+            <Border Grid.Column="0" Background="{StaticResource PanelBrush}" BorderBrush="{StaticResource BorderBrush}"
+                    BorderThickness="1" CornerRadius="8" Padding="4">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <!-- Cabeçalho das colunas: alinhado com sensores de componentes de 1º nível
+                         (sub-componentes, como o Super I/O da placa-mãe, ficam um recuo à direita). -->
+                    <Grid Grid.Row="0" Margin="62,4,0,6" HorizontalAlignment="Left">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="260" />
+                            <ColumnDefinition Width="100" />
+                            <ColumnDefinition Width="100" />
+                            <ColumnDefinition Width="100" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="Sensor" Foreground="{StaticResource MutedBrush}" />
+                        <TextBlock Grid.Column="1" Text="Valor" Foreground="{StaticResource MutedBrush}" TextAlignment="Right" />
+                        <TextBlock Grid.Column="2" Text="Mín" Foreground="{StaticResource MutedBrush}" TextAlignment="Right" />
+                        <TextBlock Grid.Column="3" Text="Máx" Foreground="{StaticResource MutedBrush}" TextAlignment="Right" />
+                    </Grid>
+
+                    <TreeView x:Name="Tree" Grid.Row="1"
+                              ItemsSource="{Binding Roots}"
+                              Background="Transparent"
+                              BorderThickness="0"
+                              SelectedItemChanged="Tree_SelectedItemChanged"
+                              MouseDoubleClick="Tree_MouseDoubleClick"
+                              VirtualizingPanel.IsVirtualizing="True"
+                              VirtualizingPanel.VirtualizationMode="Recycling">
+                        <TreeView.ItemContainerStyle>
+                            <Style TargetType="TreeViewItem">
+                                <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
+                                <Setter Property="Visibility" Value="{Binding IsVisible, Converter={StaticResource BoolToVisibility}}" />
+                                <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+                                <Setter Property="Padding" Value="2,1" />
+                            </Style>
+                        </TreeView.ItemContainerStyle>
+
+                        <TreeView.Resources>
+                            <!-- Componente (CPU, GPU, placa-mãe...) -->
+                            <HierarchicalDataTemplate DataType="{x:Type vm:HardwareNodeViewModel}" ItemsSource="{Binding Children}">
+                                <StackPanel Orientation="Horizontal" Margin="0,4,0,2">
+                                    <Border Background="{Binding TagColor}" CornerRadius="4" Padding="6,1" Margin="0,0,8,0" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding Tag}" FontSize="10" FontWeight="Bold" Foreground="White" />
+                                    </Border>
+                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="14" VerticalAlignment="Center" />
+                                    <TextBlock Text="{Binding TypeName}" Foreground="{StaticResource MutedBrush}" Margin="10,0,0,0" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </HierarchicalDataTemplate>
+
+                            <!-- Grupo por tipo (Temperaturas, Uso, Clocks...) -->
+                            <HierarchicalDataTemplate DataType="{x:Type vm:SensorGroupNodeViewModel}" ItemsSource="{Binding Children}">
+                                <TextBlock Text="{Binding Name}" Foreground="{StaticResource AccentBrush}" FontWeight="SemiBold" Margin="0,3,0,1" />
+                            </HierarchicalDataTemplate>
+
+                            <!-- Sensor -->
+                            <DataTemplate DataType="{x:Type vm:SensorNodeViewModel}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="260" />
+                                        <ColumnDefinition Width="100" />
+                                        <ColumnDefinition Width="100" />
+                                        <ColumnDefinition Width="100" />
+                                        <ColumnDefinition Width="40" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="{Binding Name}" TextTrimming="CharacterEllipsis" ToolTip="{Binding Id}" />
+                                    <TextBlock Grid.Column="1" Text="{Binding ValueText}" TextAlignment="Right" FontWeight="SemiBold" />
+                                    <TextBlock Grid.Column="2" Text="{Binding MinText}" TextAlignment="Right" Foreground="{StaticResource MutedBrush}" />
+                                    <TextBlock Grid.Column="3" Text="{Binding MaxText}" TextAlignment="Right" Foreground="{StaticResource MutedBrush}" />
+                                    <TextBlock Grid.Column="4" Text="●" Foreground="{StaticResource AccentBrush}" HorizontalAlignment="Center"
+                                               ToolTip="Já está no overlay"
+                                               Visibility="{Binding IsOnOverlay, Converter={StaticResource BoolToVisibility}}" />
+                                </Grid>
+                            </DataTemplate>
+                        </TreeView.Resources>
+                    </TreeView>
+
+                    <!-- Carregando / erro -->
+                    <StackPanel Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibility}}">
+                        <TextBlock HorizontalAlignment="Center" FontSize="15" Text="Detectando hardware…" />
+                        <TextBlock HorizontalAlignment="Center" Foreground="{StaticResource MutedBrush}"
+                                   Text="A primeira leitura pode levar alguns segundos." />
+                    </StackPanel>
+                    <TextBlock Grid.Row="1" Margin="16" TextWrapping="Wrap" VerticalAlignment="Bottom"
+                               Foreground="{StaticResource DangerBrush}" Text="{Binding ErrorText}"
+                               Visibility="{Binding HasError, Converter={StaticResource BoolToVisibility}}" />
+                </Grid>
+            </Border>
+
+            <GridSplitter Grid.Column="1" Width="10" HorizontalAlignment="Stretch" Background="Transparent" />
+
+            <!-- Painel lateral -->
+            <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto">
+                <StackPanel>
+
+                    <!-- Sensor selecionado -->
+                    <Border Style="{StaticResource Card}">
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource CardTitle}" Text="Sensor selecionado" />
+                            <TextBlock Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap"
+                                       Text="Selecione um sensor na árvore."
+                                       Visibility="{Binding HasSelectedSensor, Converter={StaticResource BoolToVisibility}, ConverterParameter=invert}" />
+
+                            <StackPanel Visibility="{Binding HasSelectedSensor, Converter={StaticResource BoolToVisibility}}">
+                                <TextBlock FontSize="15" FontWeight="SemiBold" Text="{Binding SelectedSensor.Name}" TextWrapping="Wrap" />
+                                <TextBlock Foreground="{StaticResource MutedBrush}" Margin="0,2,0,8" TextWrapping="Wrap">
+                                    <Run Text="{Binding SelectedSensor.HardwareName, Mode=OneWay}" />
+                                    <Run Text=" · " />
+                                    <Run Text="{Binding SelectedSensor.TypeName, Mode=OneWay}" />
+                                </TextBlock>
+
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="Agora" Foreground="{StaticResource MutedBrush}" />
+                                        <TextBlock Text="{Binding SelectedSensor.ValueText}" FontSize="18" FontWeight="SemiBold" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1">
+                                        <TextBlock Text="Mínimo" Foreground="{StaticResource MutedBrush}" />
+                                        <TextBlock Text="{Binding SelectedSensor.MinText}" FontSize="18" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2">
+                                        <TextBlock Text="Máximo" Foreground="{StaticResource MutedBrush}" />
+                                        <TextBlock Text="{Binding SelectedSensor.MaxText}" FontSize="18" />
+                                    </StackPanel>
+                                </Grid>
+
+                                <TextBlock Text="ID" Foreground="{StaticResource MutedBrush}" />
+                                <DockPanel Margin="0,2,0,10">
+                                    <Button DockPanel.Dock="Right" Content="Copiar" Command="{Binding CopySelectedIdCommand}" Margin="6,0,0,0" />
+                                    <TextBox IsReadOnly="True" Text="{Binding SelectedSensor.Id, Mode=OneWay}" />
+                                </DockPanel>
+
+                                <Button Style="{StaticResource AccentButton}" Margin="0"
+                                        Content="Adicionar ao overlay" Command="{Binding AddSelectedCommand}" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Gauges no overlay -->
+                    <Border Style="{StaticResource Card}" DataContext="{Binding Overlay}">
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource CardTitle}" Text="Gauges no overlay" />
+                            <ListBox ItemsSource="{Binding Gauges}"
+                                     SelectedItem="{Binding SelectedGauge}"
+                                     Background="#0F1318" BorderBrush="{StaticResource BorderBrush}"
+                                     Foreground="{StaticResource TextBrush}"
+                                     MinHeight="60" MaxHeight="220">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate DataType="{x:Type vm:GaugeViewModel}">
+                                        <DockPanel Margin="2,3" ToolTip="{Binding SensorName}">
+                                            <TextBlock DockPanel.Dock="Right" Margin="10,0,0,0" Foreground="{Binding StateBrush}">
+                                                <Run Text="{Binding ValueText, Mode=OneWay}" /><Run Text=" " /><Run Text="{Binding UnitText, Mode=OneWay}" />
+                                            </TextBlock>
+                                            <TextBlock Text="{Binding Label}" TextTrimming="CharacterEllipsis" />
+                                        </DockPanel>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                            <DockPanel Margin="0,8,0,0">
+                                <Button DockPanel.Dock="Right" Content="Restaurar sugestões" Command="{Binding ResetToSuggestionsCommand}" Margin="0"
+                                        ToolTip="Recria os gauges com a escolha automática para esta máquina." />
+                                <StackPanel Orientation="Horizontal">
+                                    <Button Content="▲" Command="{Binding MoveUpCommand}" ToolTip="Subir" />
+                                    <Button Content="▼" Command="{Binding MoveDownCommand}" ToolTip="Descer" />
+                                    <Button Content="Remover" Command="{Binding RemoveSelectedCommand}" />
+                                </StackPanel>
+                            </DockPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Editar gauge selecionado -->
+                    <Border Style="{StaticResource Card}" DataContext="{Binding Overlay.SelectedGauge}"
+                            Visibility="{Binding Converter={StaticResource NullToVisibility}}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <Grid.Resources>
+                                <Style TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
+                                    <Setter Property="Margin" Value="0,3" />
+                                </Style>
+                            </Grid.Resources>
+
+                            <TextBlock Grid.Row="0" Grid.ColumnSpan="2" Style="{StaticResource CardTitle}" Text="Editar gauge" />
+                            <TextBlock Grid.Row="1" Grid.ColumnSpan="2" Foreground="{StaticResource MutedBrush}" Margin="0,0,0,6"
+                                       TextWrapping="Wrap" Text="{Binding SensorName}" />
+
+                            <TextBlock Grid.Row="2" Style="{StaticResource FieldLabel}" Text="Rótulo" />
+                            <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding Label, UpdateSourceTrigger=PropertyChanged}" />
+
+                            <TextBlock Grid.Row="3" Style="{StaticResource FieldLabel}" Text="Estilo" />
+                            <ComboBox Grid.Row="3" Grid.Column="1" Margin="0,3"
+                                      ItemsSource="{x:Static vm:GaugeViewModel.StyleOptions}"
+                                      DisplayMemberPath="Name" SelectedValuePath="Value"
+                                      SelectedValue="{Binding Style}" />
+
+                            <TextBlock Grid.Row="4" Style="{StaticResource FieldLabel}" Text="Faixa" />
+                            <Grid Grid.Row="4" Grid.Column="1">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBox Grid.Column="0" Text="{Binding Min}" ToolTip="Mínimo" />
+                                <TextBlock Grid.Column="1" Text="até" Margin="8,0" VerticalAlignment="Center" Foreground="{StaticResource MutedBrush}" />
+                                <TextBox Grid.Column="2" Text="{Binding Max}" ToolTip="Máximo" />
+                            </Grid>
+
+                            <TextBlock Grid.Row="5" Style="{StaticResource FieldLabel}" Text="Alerta" Foreground="{StaticResource WarnBrush}" />
+                            <TextBox Grid.Row="5" Grid.Column="1" Text="{Binding Warn, TargetNullValue=''}"
+                                     ToolTip="A partir deste valor o gauge fica amarelo. Vazio = sem alerta." />
+
+                            <TextBlock Grid.Row="6" Style="{StaticResource FieldLabel}" Text="Crítico" Foreground="{StaticResource DangerBrush}" />
+                            <TextBox Grid.Row="6" Grid.Column="1" Text="{Binding Crit, TargetNullValue=''}"
+                                     ToolTip="A partir deste valor o gauge fica vermelho. Vazio = sem alerta." />
+
+                            <TextBlock Grid.Row="7" Style="{StaticResource FieldLabel}" Text="Decimais" />
+                            <TextBox Grid.Row="7" Grid.Column="1" Text="{Binding Decimals}" />
+
+                            <TextBlock Grid.Row="8" Style="{StaticResource FieldLabel}" Text="Unidade" />
+                            <TextBox Grid.Row="8" Grid.Column="1" Text="{Binding Unit, TargetNullValue=''}"
+                                     ToolTip="Vazio = unidade padrão do sensor (°C, %, MHz...)." />
+                        </Grid>
+                    </Border>
+
+                    <!-- Aparência do overlay -->
+                    <Border Style="{StaticResource Card}" DataContext="{Binding Overlay}">
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource CardTitle}" Text="Overlay" />
+
+                            <CheckBox Content="Mostrar overlay" IsChecked="{Binding OverlayVisible}" />
+                            <CheckBox Content="Travar overlay (mouse atravessa)" IsChecked="{Binding ClickThrough}"
+                                      ToolTip="Com o overlay travado, cliques passam para o que está atrás dele. Para destravar, use o ícone na bandeja do sistema." />
+                            <CheckBox Content="Abrir esta janela ao iniciar" IsChecked="{Binding ShowSensorWindowOnStartup}" />
+
+                            <Grid Margin="0,10,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="110" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="56" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="30" />
+                                    <RowDefinition Height="30" />
+                                    <RowDefinition Height="30" />
+                                    <RowDefinition Height="30" />
+                                    <RowDefinition Height="30" />
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Grid.Row="0" Style="{StaticResource FieldLabel}" Text="Tamanho" />
+                                <Slider Grid.Row="0" Grid.Column="1" Minimum="70" Maximum="320" SmallChange="5" LargeChange="20"
+                                        Value="{Binding GaugeSize}" />
+                                <TextBlock Grid.Row="0" Grid.Column="2" VerticalAlignment="Center" TextAlignment="Right"
+                                           Text="{Binding GaugeSize, StringFormat={}{0:0} px}" />
+
+                                <TextBlock Grid.Row="1" Style="{StaticResource FieldLabel}" Text="Opacidade" />
+                                <Slider Grid.Row="1" Grid.Column="1" Minimum="0.2" Maximum="1" SmallChange="0.05" LargeChange="0.1"
+                                        Value="{Binding OverlayOpacity}" />
+                                <TextBlock Grid.Row="1" Grid.Column="2" VerticalAlignment="Center" TextAlignment="Right"
+                                           Text="{Binding OverlayOpacity, Converter={StaticResource Percent}}" />
+
+                                <TextBlock Grid.Row="2" Style="{StaticResource FieldLabel}" Text="Fundo" />
+                                <Slider Grid.Row="2" Grid.Column="1" Minimum="0" Maximum="1" SmallChange="0.05" LargeChange="0.1"
+                                        Value="{Binding BackgroundOpacity}" />
+                                <TextBlock Grid.Row="2" Grid.Column="2" VerticalAlignment="Center" TextAlignment="Right"
+                                           Text="{Binding BackgroundOpacity, Converter={StaticResource Percent}}" />
+
+                                <TextBlock Grid.Row="3" Style="{StaticResource FieldLabel}" Text="Colunas" />
+                                <Slider Grid.Row="3" Grid.Column="1" Minimum="0" Maximum="8" IsSnapToTickEnabled="True" TickFrequency="1"
+                                        Value="{Binding Columns}" ToolTip="0 = todos numa linha" />
+                                <TextBlock Grid.Row="3" Grid.Column="2" VerticalAlignment="Center" TextAlignment="Right"
+                                           Text="{Binding Columns}" />
+
+                                <TextBlock Grid.Row="4" Style="{StaticResource FieldLabel}" Text="Atualização" />
+                                <Slider Grid.Row="4" Grid.Column="1" Minimum="250" Maximum="5000" IsSnapToTickEnabled="True" TickFrequency="250"
+                                        Value="{Binding UpdateIntervalMs}" />
+                                <TextBlock Grid.Row="4" Grid.Column="2" VerticalAlignment="Center" TextAlignment="Right"
+                                           Text="{Binding UpdateIntervalMs, StringFormat={}{0} ms}" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+
+        <!-- ===================== Rodapé ===================== -->
+        <DockPanel Grid.Row="4" Margin="0,10,0,0">
+            <Button DockPanel.Dock="Right" Content="Abrir pasta de configuração" Command="{Binding OpenSettingsFolderCommand}" Margin="0" />
+            <TextBlock VerticalAlignment="Center" TextWrapping="Wrap" Foreground="{StaticResource MutedBrush}">
+                <Run Text="{Binding Feedback, Mode=OneWay}" Foreground="{StaticResource AccentBrush}" />
+                <LineBreak />
+                <Run Text="Overlay: arraste com o mouse · Ctrl + roda do mouse muda o tamanho · botão direito abre o menu · fechar esta janela não fecha o app (ícone na bandeja)." />
+            </TextBlock>
+        </DockPanel>
+    </Grid>
+</Window>

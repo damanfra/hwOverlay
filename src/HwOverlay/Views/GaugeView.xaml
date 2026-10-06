@@ -1,0 +1,54 @@
+<UserControl x:Class="HwOverlay.Views.GaugeView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.WPF;assembly=LiveChartsCore.SkiaSharpView.WPF"
+             xmlns:vm="clr-namespace:HwOverlay.ViewModels"
+             mc:Ignorable="d"
+             d:DataContext="{d:DesignInstance Type=vm:GaugeViewModel}">
+
+    <StackPanel Margin="4,2">
+        <Grid Width="{Binding Size}" Height="{Binding Size}">
+
+            <!-- O gráfico não recebe mouse: assim arrastar o overlay funciona em qualquer ponto. -->
+            <lvc:PieChart Series="{Binding Series}"
+                          VisualElements="{Binding VisualElements}"
+                          MinValue="{Binding ChartMin}"
+                          MaxValue="{Binding ChartMax}"
+                          InitialRotation="-225"
+                          MaxAngle="270"
+                          TooltipPosition="Hidden"
+                          LegendPosition="Hidden"
+                          AnimationsSpeed="00:00:00.500"
+                          Background="Transparent"
+                          IsHitTestVisible="False" />
+
+            <StackPanel HorizontalAlignment="Center"
+                        VerticalAlignment="{Binding ValueVerticalAlignment}"
+                        Margin="{Binding ValueMargin}"
+                        IsHitTestVisible="False">
+                <TextBlock HorizontalAlignment="Center"
+                           Text="{Binding ValueText}"
+                           FontSize="{Binding ValueFontSize}"
+                           FontWeight="SemiBold"
+                           Foreground="{Binding StateBrush}" />
+                <TextBlock HorizontalAlignment="Center"
+                           Margin="0,-2,0,0"
+                           Text="{Binding UnitText}"
+                           FontSize="{Binding UnitFontSize}"
+                           Foreground="#8C96A5" />
+            </StackPanel>
+        </Grid>
+
+        <TextBlock HorizontalAlignment="Center"
+                   MaxWidth="{Binding Size}"
+                   Margin="0,0,0,2"
+                   Text="{Binding Label}"
+                   TextTrimming="CharacterEllipsis"
+                   FontSize="{Binding LabelFontSize}"
+                   FontWeight="SemiBold"
+                   Foreground="#C7CED8"
+                   ToolTip="{Binding SensorName}" />
+    </StackPanel>
+</UserControl>
