@@ -82,6 +82,12 @@ Notebook Positivo (placa DN50E-140H_I219V), Intel Core i7-1255U, GPU Intel Iris 
    `SM_CXSMICON` do DPI da barra + barrinha de progresso, cores da `TaskbarPalette` do tema da barra.
    O Win11 guarda a fixação por (exe, id do ícone) e o WinForms numera por ordem de criação → os ícones
    ficam num pool e nunca são recriados na execução (só Visible on/off). Handles de ícone liberados com `DestroyIcon`.
+5. Ícones da bandeja aprovados "sem entusiasmo" (captura06) — ficam, mas sem investir mais. Janela de sensores:
+   colunas árvore/painel proporcionais (painel em largura fixa vazava ao estreitar a janela).
+   Modo barra ganhou "Estilo do fundo": sólido, afundado (faixa única) ou afundado (um por gauge).
+   1ª tentativa com gradiente + borda clara embaixo lia como botão saltado (capturas 07/08); a versão aprovada
+   (`InsetSurface`) desenha interior liso, sombra interna em camadas na borda de cima e brilho de 1 px por fora, embaixo.
+   Prévias visuais sem rodar o app (que exige admin): renderizar o mesmo desenho via WPF no PowerShell 5.1.
 
 ## Pendências / ideias
 
