@@ -270,6 +270,7 @@
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
                             <Grid.Resources>
                                 <Style TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
@@ -328,6 +329,10 @@
                             <TextBlock Grid.Row="9" Style="{StaticResource FieldLabel}" Text="Unidade" />
                             <TextBox Grid.Row="9" Grid.Column="1" Text="{Binding Unit, TargetNullValue=''}"
                                      ToolTip="Vazio = unidade padrão do sensor (°C, %, MHz...)." />
+
+                            <CheckBox Grid.Row="10" Grid.Column="1" Margin="0,6,0,0" Content="Mostrar na bandeja"
+                                      IsChecked="{Binding ShowInTray}"
+                                      ToolTip="Vira um ícone com o valor quando os ícones na bandeja estão ligados." />
                         </Grid>
                     </Border>
 
@@ -428,6 +433,21 @@
                                 <TextBlock Grid.Row="1" Grid.Column="2" VerticalAlignment="Center" TextAlignment="Right"
                                            Text="{Binding TaskbarOffset, StringFormat={}{0:0} px}" />
                             </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Ícones vivos na bandeja -->
+                    <Border Style="{StaticResource Card}" DataContext="{Binding Overlay}">
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource CardTitle}" Text="Ícones na bandeja" />
+
+                            <CheckBox Content="Mostrar os valores como ícones na bandeja" IsChecked="{Binding TrayIconsEnabled}"
+                                      ToolTip="Um ícone por gauge, com o valor e uma barrinha de progresso. Escolha quais em Editar gauge → Mostrar na bandeja." />
+
+                            <TextBlock Margin="0,8,0,0" TextWrapping="Wrap" Foreground="{StaticResource MutedBrush}"
+                                       Text="No Windows 11 os ícones novos ficam escondidos no menu ^ da bandeja. Para deixá-los sempre visíveis, ative o HwOverlay em Outros ícones da bandeja (uma vez por ícone)." />
+                            <Button Margin="0,8,0,0" HorizontalAlignment="Left" Content="Abrir configurações da barra de tarefas"
+                                    Click="OpenTaskbarSettings_Click" />
                         </StackPanel>
                     </Border>
                 </StackPanel>

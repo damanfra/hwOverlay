@@ -145,6 +145,12 @@ public sealed class GaugeViewModel : ObservableObject
         set => SetConfig(_config.Unit, string.IsNullOrWhiteSpace(value) ? null : value.Trim(), v => _config.Unit = v, rebuild: false);
     }
 
+    public bool ShowInTray
+    {
+        get => _config.ShowInTray;
+        set => SetConfig(_config.ShowInTray, value, v => _config.ShowInTray = v, rebuild: false);
+    }
+
     public static IReadOnlyList<StyleOption> StyleOptions { get; } =
     [
         new(GaugeStyle.Arc, "Arco"),
@@ -173,6 +179,9 @@ public sealed class GaugeViewModel : ObservableObject
     public VerticalAlignment ValueVerticalAlignment => IsNeedle ? VerticalAlignment.Bottom : VerticalAlignment.Center;
 
     public Thickness ValueMargin => IsNeedle ? new Thickness(0, 0, 0, _size * 0.02) : new Thickness(0, _size * 0.04, 0, 0);
+
+    /// <summary>Última leitura (nulo = sem dados).</summary>
+    public double? Value => _rawValue is { } v && !double.IsNaN(v) ? v : null;
 
     public string ValueText => _rawValue is { } v ? SensorFormatting.FormatNumber(v, _config.Decimals) : "N/D";
 

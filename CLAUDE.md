@@ -77,6 +77,12 @@ Notebook Positivo (placa DN50E-140H_I219V), Intel Core i7-1255U, GPU Intel Iris 
    Em seguida: unidade compacta dentro do anel (`SensorFormatting.CompactUnit`: °C → "°") e rótulo curto numa
    linha (`GaugeConfig.ShortLabel`; nulo = `AutoShortLabel`, que tira Temp/Uso/Potência do fim).
 
+4. `main` recebeu o modo barra de tarefas. Branch `feature/icones-bandeja` — opção 2, ícones vivos na bandeja
+   (`TrayGaugeIconService`): um `NotifyIcon` por gauge com `ShowInTray`, valor desenhado em GDI+ no tamanho
+   `SM_CXSMICON` do DPI da barra + barrinha de progresso, cores da `TaskbarPalette` do tema da barra.
+   O Win11 guarda a fixação por (exe, id do ícone) e o WinForms numera por ordem de criação → os ícones
+   ficam num pool e nunca são recriados na execução (só Visible on/off). Handles de ícone liberados com `DestroyIcon`.
+
 ## Pendências / ideias
 
 - Modo barra de tarefas: testar visualmente; depois as outras opções — ícones vivos na bandeja (valor desenhado

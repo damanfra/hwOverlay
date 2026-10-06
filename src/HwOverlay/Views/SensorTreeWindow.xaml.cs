@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -29,6 +30,19 @@ public partial class SensorTreeWindow : Window
         {
             _vm.AddToOverlay(sensor);
             e.Handled = true;
+        }
+    }
+
+    /// <summary>Configurações › Personalização › Barra de tarefas (onde se fixam os ícones da bandeja).</summary>
+    private void OpenTaskbarSettings_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            Process.Start(new ProcessStartInfo("ms-settings:taskbar") { UseShellExecute = true });
+        }
+        catch
+        {
+            // sem o app Configurações (raro): o texto do cartão já explica o caminho
         }
     }
 

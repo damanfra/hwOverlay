@@ -18,6 +18,7 @@ public partial class App : Application
     private SettingsService? _settings;
     private HardwareMonitorService? _monitor;
     private TrayIconService? _tray;
+    private TrayGaugeIconService? _trayGauges;
     private OverlayViewModel? _overlayVm;
     private SensorTreeViewModel? _treeVm;
     private OverlayWindow? _overlayWindow;
@@ -68,12 +69,17 @@ public partial class App : Application
         tray.ToggleOverlayRequested += (_, _) => overlayVm.OverlayVisible = !overlayVm.OverlayVisible;
         tray.ToggleClickThroughRequested += (_, _) => overlayVm.ClickThrough = !overlayVm.ClickThrough;
         tray.ToggleTaskbarModeRequested += (_, _) => overlayVm.IsTaskbarMode = !overlayVm.IsTaskbarMode;
+        tray.ToggleTrayIconsRequested += (_, _) => overlayVm.TrayIconsEnabled = !overlayVm.TrayIconsEnabled;
         tray.ExitRequested += (_, _) => ExitApp();
+
+        // Criado depois do ícone principal: a ordem de criação define o id de cada ícone (e a fixação no Win11).
+        var trayGauges = _trayGauges = new TrayGaugeIconService(overlayVm, tray.Menu);
+        trayGauges.OpenSensorsRequested += (_, _) => ShowSensorWindow();
 
         overlayVm.PropertyChanged += (_, args) =>
         {
             if (args.PropertyName is nameof(OverlayViewModel.OverlayVisible) or nameof(OverlayViewModel.ClickThrough)
-                or nameof(OverlayViewModel.Mode))
+                or nameof(OverlayViewModel.Mode) or nameof(OverlayViewModel.TrayIconsEnabled))
                 SyncOverlayVisibility();
 
             if (args.PropertyName == nameof(OverlayViewModel.ClickThrough) && overlayVm.ClickThrough)
@@ -83,6 +89,7 @@ public partial class App : Application
         monitor.Updated += (_, snapshot) => Dispatcher.InvokeAsync(() =>
         {
             overlayVm.ApplySnapshot(snapshot);
+            trayGauges.Refresh();
             if (_sensorWindow is { IsVisible: true }) treeVm.ApplySnapshot(snapshot);
         });
         monitor.Failed += (_, ex) => Dispatcher.InvokeAsync(() =>
@@ -114,7 +121,7 @@ public partial class App : Application
 
         _taskbarWindow.SetActive(_overlayVm.OverlayVisible && _overlayVm.IsTaskbarMode);
 
-        _tray?.SetState(_overlayVm.OverlayVisible, _overlayVm.ClickThrough, _overlayVm.IsTaskbarMode);
+        _tray?.SetState(_overlayVm.OverlayVisible, _overlayVm.ClickThrough, _overlayVm.IsTaskbarMode, _overlayVm.TrayIconsEnabled);
     }
 
     private void ShowSensorWindow()
@@ -141,6 +148,7 @@ public partial class App : Application
         _sensorWindow?.Close();
         _overlayWindow?.Close();
         _taskbarWindow?.Close();
+        _trayGauges?.Dispose();
         _tray?.Dispose();
         _monitor?.Dispose();
         Shutdown();
@@ -149,6 +157,7 @@ public partial class App : Application
     protected override void OnExit(ExitEventArgs e)
     {
         _settings?.SaveNow();
+        _trayGauges?.Dispose();
         _tray?.Dispose();
         _singleInstance?.Dispose();
         base.OnExit(e);

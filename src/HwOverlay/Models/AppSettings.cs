@@ -55,6 +55,9 @@ public sealed class GaugeConfig
 
     /// <summary>Sobrescreve a unidade padrão do tipo de sensor (°C, %, MHz...).</summary>
     public string? Unit { get; set; }
+
+    /// <summary>Vira um ícone com o valor na bandeja (quando os ícones da bandeja estão ligados).</summary>
+    public bool ShowInTray { get; set; } = true;
 }
 
 public sealed class AppSettings
@@ -77,6 +80,9 @@ public sealed class AppSettings
 
     /// <summary>Opacidade do fundo dos mini-gauges (0 = direto sobre a barra, cores seguem o tema dela).</summary>
     public double TaskbarBackgroundOpacity { get; set; }
+
+    /// <summary>Um ícone por gauge na bandeja do sistema, com o valor desenhado nele.</summary>
+    public bool TrayIconsEnabled { get; set; }
 
     public double OverlayOpacity { get; set; } = 0.92;
 

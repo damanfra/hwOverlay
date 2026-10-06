@@ -13,6 +13,7 @@ public sealed class TrayIconService : IDisposable
     private readonly Forms.ToolStripMenuItem _toggleOverlay;
     private readonly Forms.ToolStripMenuItem _clickThrough;
     private readonly Forms.ToolStripMenuItem _taskbarMode;
+    private readonly Forms.ToolStripMenuItem _trayIcons;
     private bool _disposed;
 
     public TrayIconService()
@@ -39,6 +40,9 @@ public sealed class TrayIconService : IDisposable
         _taskbarMode = new Forms.ToolStripMenuItem("Modo barra de tarefas (ultra compacto)") { CheckOnClick = false };
         _taskbarMode.Click += (_, _) => ToggleTaskbarModeRequested?.Invoke(this, EventArgs.Empty);
 
+        _trayIcons = new Forms.ToolStripMenuItem("Valores como ícones na bandeja") { CheckOnClick = false };
+        _trayIcons.Click += (_, _) => ToggleTrayIconsRequested?.Invoke(this, EventArgs.Empty);
+
         var exit = new Forms.ToolStripMenuItem("Sair");
         exit.Click += (_, _) => ExitRequested?.Invoke(this, EventArgs.Empty);
 
@@ -47,6 +51,7 @@ public sealed class TrayIconService : IDisposable
         menu.Items.Add(_toggleOverlay);
         menu.Items.Add(_clickThrough);
         menu.Items.Add(_taskbarMode);
+        menu.Items.Add(_trayIcons);
         menu.Items.Add(new Forms.ToolStripSeparator());
         menu.Items.Add(exit);
 
@@ -54,18 +59,23 @@ public sealed class TrayIconService : IDisposable
         _icon.DoubleClick += (_, _) => OpenSensorsRequested?.Invoke(this, EventArgs.Empty);
     }
 
+    /// <summary>Menu compartilhado com os ícones de valores (mesmas opções em qualquer ícone).</summary>
+    public Forms.ContextMenuStrip Menu => _icon.ContextMenuStrip!;
+
     public event EventHandler? OpenSensorsRequested;
     public event EventHandler? ToggleOverlayRequested;
     public event EventHandler? ToggleClickThroughRequested;
     public event EventHandler? ToggleTaskbarModeRequested;
+    public event EventHandler? ToggleTrayIconsRequested;
     public event EventHandler? ExitRequested;
 
-    public void SetState(bool overlayVisible, bool clickThrough, bool taskbarMode)
+    public void SetState(bool overlayVisible, bool clickThrough, bool taskbarMode, bool trayIcons)
     {
         _toggleOverlay.Checked = overlayVisible;
         _clickThrough.Checked = clickThrough;
         _clickThrough.Enabled = !taskbarMode; // na barra a janela não flutua: travar não se aplica
         _taskbarMode.Checked = taskbarMode;
+        _trayIcons.Checked = trayIcons;
     }
 
     public void ShowBalloon(string title, string text)

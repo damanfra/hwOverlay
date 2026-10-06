@@ -238,6 +238,20 @@ public sealed class OverlayViewModel : ObservableObject
     /// <summary>Mesmo alfa mínimo de 1/255 do overlay: sem ele não daria para arrastar nem abrir o menu.</summary>
     public Brush TaskbarBackgroundBrush => MakeBackground(TaskbarBackgroundOpacity);
 
+    // ---------- Ícones vivos na bandeja ----------
+
+    public bool TrayIconsEnabled
+    {
+        get => Settings.TrayIconsEnabled;
+        set
+        {
+            if (Settings.TrayIconsEnabled == value) return;
+            Settings.TrayIconsEnabled = value;
+            OnPropertyChanged();
+            Save();
+        }
+    }
+
     public int UpdateIntervalMs
     {
         get => Settings.UpdateIntervalMs;
