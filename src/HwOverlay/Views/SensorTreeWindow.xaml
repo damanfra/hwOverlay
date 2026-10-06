@@ -27,11 +27,11 @@
 
         <!-- ===================== Cabeçalho ===================== -->
         <DockPanel Grid.Row="0" Margin="0,0,0,10">
-            <TextBlock DockPanel.Dock="Right" VerticalAlignment="Bottom"
+            <TextBlock DockPanel.Dock="Right" VerticalAlignment="Bottom" Margin="16,0,0,0"
                        Foreground="{StaticResource MutedBrush}" Text="{Binding StatusText}" />
             <StackPanel>
                 <TextBlock FontSize="20" FontWeight="SemiBold" Text="Sensores detectados" />
-                <TextBlock Foreground="{StaticResource MutedBrush}"
+                <TextBlock Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap"
                            Text="Tudo o que o LibreHardwareMonitor consegue ler nesta máquina. Duplo clique num sensor para colocá-lo no overlay." />
             </StackPanel>
         </DockPanel>
@@ -66,10 +66,12 @@
 
         <!-- ===================== Árvore + painel ===================== -->
         <Grid Grid.Row="3">
+            <!-- Colunas proporcionais: com largura fixa, arrastar o divisor e depois estreitar a janela
+                 empurrava o painel para fora da tela. A soma dos mínimos cabe no MinWidth da janela. -->
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" MinWidth="420" />
+                <ColumnDefinition Width="2*" MinWidth="380" />
                 <ColumnDefinition Width="10" />
-                <ColumnDefinition Width="380" MinWidth="320" />
+                <ColumnDefinition Width="*" MinWidth="340" />
             </Grid.ColumnDefinitions>
 
             <!-- Árvore -->
@@ -168,7 +170,7 @@
             <GridSplitter Grid.Column="1" Width="10" HorizontalAlignment="Stretch" Background="Transparent" />
 
             <!-- Painel lateral -->
-            <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto">
+            <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                 <StackPanel>
 
                     <!-- Sensor selecionado -->
@@ -398,7 +400,7 @@
                         <StackPanel>
                             <TextBlock Style="{StaticResource CardTitle}" Text="Barra de tarefas" />
 
-                            <CheckBox Content="Modo ultra compacto (mini-gauges na barra de tarefas)" IsChecked="{Binding IsTaskbarMode}"
+                            <CheckBox Content="Ativar o modo ultra compacto" IsChecked="{Binding IsTaskbarMode}"
                                       ToolTip="Troca o overlay flutuante por mini-gauges sobrepostos à barra de tarefas. Somem sozinhos em tela cheia." />
 
                             <Grid Margin="0,10,0,0" IsEnabled="{Binding IsTaskbarMode}">
@@ -441,7 +443,7 @@
                         <StackPanel>
                             <TextBlock Style="{StaticResource CardTitle}" Text="Ícones na bandeja" />
 
-                            <CheckBox Content="Mostrar os valores como ícones na bandeja" IsChecked="{Binding TrayIconsEnabled}"
+                            <CheckBox Content="Mostrar valores como ícones" IsChecked="{Binding TrayIconsEnabled}"
                                       ToolTip="Um ícone por gauge, com o valor e uma barrinha de progresso. Escolha quais em Editar gauge → Mostrar na bandeja." />
 
                             <TextBlock Margin="0,8,0,0" TextWrapping="Wrap" Foreground="{StaticResource MutedBrush}"
