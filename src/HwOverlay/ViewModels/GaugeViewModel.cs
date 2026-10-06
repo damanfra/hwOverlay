@@ -79,9 +79,28 @@ public sealed class GaugeViewModel : ObservableObject
             if (_config.Label == value) return;
             _config.Label = value;
             OnPropertyChanged();
+            OnPropertyChanged(nameof(TaskbarLabel));
             ConfigChanged?.Invoke(this, EventArgs.Empty);
         }
     }
+
+    /// <summary>Rótulo personalizado do modo barra de tarefas; vazio = automático.</summary>
+    public string? ShortLabel
+    {
+        get => _config.ShortLabel;
+        set
+        {
+            value = string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+            if (_config.ShortLabel == value) return;
+            _config.ShortLabel = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(TaskbarLabel));
+            ConfigChanged?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    /// <summary>O que aparece ao lado do mini-anel na barra de tarefas.</summary>
+    public string TaskbarLabel => _config.ShortLabel ?? SensorFormatting.AutoShortLabel(_config.Label);
 
     public double Min
     {
@@ -159,6 +178,9 @@ public sealed class GaugeViewModel : ObservableObject
 
     public string UnitText => _config.Unit ?? (_sensorType is { } t ? SensorFormatting.Unit(t) : "");
 
+    /// <summary>Unidade abreviada para caber dentro do mini-anel da barra de tarefas.</summary>
+    public string CompactUnitText => SensorFormatting.CompactUnit(UnitText);
+
     public GaugeState State
     {
         get => _state;
@@ -221,6 +243,7 @@ public sealed class GaugeViewModel : ObservableObject
             {
                 _sensorType = sensor.Type;
                 OnPropertyChanged(nameof(UnitText));
+                OnPropertyChanged(nameof(CompactUnitText));
             }
         }
 
@@ -361,6 +384,7 @@ public sealed class GaugeViewModel : ObservableObject
         if (rebuild) Rebuild();
         OnPropertyChanged(nameof(ValueText));
         OnPropertyChanged(nameof(UnitText));
+        OnPropertyChanged(nameof(CompactUnitText));
 
         ConfigChanged?.Invoke(this, EventArgs.Empty);
     }

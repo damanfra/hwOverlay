@@ -269,6 +269,7 @@
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
                             <Grid.Resources>
                                 <Style TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
@@ -283,14 +284,26 @@
                             <TextBlock Grid.Row="2" Style="{StaticResource FieldLabel}" Text="Rótulo" />
                             <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding Label, UpdateSourceTrigger=PropertyChanged}" />
 
-                            <TextBlock Grid.Row="3" Style="{StaticResource FieldLabel}" Text="Estilo" />
-                            <ComboBox Grid.Row="3" Grid.Column="1" Margin="0,3"
+                            <TextBlock Grid.Row="3" Style="{StaticResource FieldLabel}" Text="Rótulo curto" />
+                            <Grid Grid.Row="3" Grid.Column="1">
+                                <TextBox x:Name="ShortLabelBox"
+                                         Text="{Binding ShortLabel, UpdateSourceTrigger=PropertyChanged, TargetNullValue=''}"
+                                         ToolTip="Usado no modo barra de tarefas. Vazio = automático (tira Temp/Uso/Potência do fim do rótulo)." />
+                                <!-- Mostra o rótulo automático enquanto o campo estiver vazio. -->
+                                <TextBlock Margin="8,0,0,0" VerticalAlignment="Center" IsHitTestVisible="False"
+                                           Foreground="{StaticResource MutedBrush}" FontStyle="Italic"
+                                           Text="{Binding TaskbarLabel, StringFormat={}{0} (automático)}"
+                                           Visibility="{Binding Text, ElementName=ShortLabelBox, Converter={StaticResource NullToVisibility}, ConverterParameter=invert}" />
+                            </Grid>
+
+                            <TextBlock Grid.Row="4" Style="{StaticResource FieldLabel}" Text="Estilo" />
+                            <ComboBox Grid.Row="4" Grid.Column="1" Margin="0,3"
                                       ItemsSource="{x:Static vm:GaugeViewModel.StyleOptions}"
                                       DisplayMemberPath="Name" SelectedValuePath="Value"
                                       SelectedValue="{Binding Style}" />
 
-                            <TextBlock Grid.Row="4" Style="{StaticResource FieldLabel}" Text="Faixa" />
-                            <Grid Grid.Row="4" Grid.Column="1">
+                            <TextBlock Grid.Row="5" Style="{StaticResource FieldLabel}" Text="Faixa" />
+                            <Grid Grid.Row="5" Grid.Column="1">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />
@@ -301,19 +314,19 @@
                                 <TextBox Grid.Column="2" Text="{Binding Max}" ToolTip="Máximo" />
                             </Grid>
 
-                            <TextBlock Grid.Row="5" Style="{StaticResource FieldLabel}" Text="Alerta" Foreground="{StaticResource WarnBrush}" />
-                            <TextBox Grid.Row="5" Grid.Column="1" Text="{Binding Warn, TargetNullValue=''}"
+                            <TextBlock Grid.Row="6" Style="{StaticResource FieldLabel}" Text="Alerta" Foreground="{StaticResource WarnBrush}" />
+                            <TextBox Grid.Row="6" Grid.Column="1" Text="{Binding Warn, TargetNullValue=''}"
                                      ToolTip="A partir deste valor o gauge fica amarelo. Vazio = sem alerta." />
 
-                            <TextBlock Grid.Row="6" Style="{StaticResource FieldLabel}" Text="Crítico" Foreground="{StaticResource DangerBrush}" />
-                            <TextBox Grid.Row="6" Grid.Column="1" Text="{Binding Crit, TargetNullValue=''}"
+                            <TextBlock Grid.Row="7" Style="{StaticResource FieldLabel}" Text="Crítico" Foreground="{StaticResource DangerBrush}" />
+                            <TextBox Grid.Row="7" Grid.Column="1" Text="{Binding Crit, TargetNullValue=''}"
                                      ToolTip="A partir deste valor o gauge fica vermelho. Vazio = sem alerta." />
 
-                            <TextBlock Grid.Row="7" Style="{StaticResource FieldLabel}" Text="Decimais" />
-                            <TextBox Grid.Row="7" Grid.Column="1" Text="{Binding Decimals}" />
+                            <TextBlock Grid.Row="8" Style="{StaticResource FieldLabel}" Text="Decimais" />
+                            <TextBox Grid.Row="8" Grid.Column="1" Text="{Binding Decimals}" />
 
-                            <TextBlock Grid.Row="8" Style="{StaticResource FieldLabel}" Text="Unidade" />
-                            <TextBox Grid.Row="8" Grid.Column="1" Text="{Binding Unit, TargetNullValue=''}"
+                            <TextBlock Grid.Row="9" Style="{StaticResource FieldLabel}" Text="Unidade" />
+                            <TextBox Grid.Row="9" Grid.Column="1" Text="{Binding Unit, TargetNullValue=''}"
                                      ToolTip="Vazio = unidade padrão do sensor (°C, %, MHz...)." />
                         </Grid>
                     </Border>

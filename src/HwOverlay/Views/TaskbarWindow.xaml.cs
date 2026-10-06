@@ -27,6 +27,9 @@ public partial class TaskbarWindow : Window
     public static readonly DependencyProperty ValueFontSizeProperty =
         DependencyProperty.Register(nameof(ValueFontSize), typeof(double), typeof(TaskbarWindow), new PropertyMetadata(12.0));
 
+    public static readonly DependencyProperty UnitFontSizeProperty =
+        DependencyProperty.Register(nameof(UnitFontSize), typeof(double), typeof(TaskbarWindow), new PropertyMetadata(8.5));
+
     public static readonly DependencyProperty LabelFontSizeProperty =
         DependencyProperty.Register(nameof(LabelFontSize), typeof(double), typeof(TaskbarWindow), new PropertyMetadata(10.5));
 
@@ -99,6 +102,12 @@ public partial class TaskbarWindow : Window
     {
         get => (double)GetValue(ValueFontSizeProperty);
         set => SetValue(ValueFontSizeProperty, value);
+    }
+
+    public double UnitFontSize
+    {
+        get => (double)GetValue(UnitFontSizeProperty);
+        set => SetValue(UnitFontSizeProperty, value);
     }
 
     public double LabelFontSize
@@ -181,7 +190,8 @@ public partial class TaskbarWindow : Window
             RingSize = ring;
             RingThickness = Math.Max(2.5, ring * 0.1);
             ValueFontSize = Math.Max(9, ring * 0.34);
-            LabelFontSize = Math.Clamp(ring * 0.3, 9, 11.5);
+            UnitFontSize = Math.Max(7, ValueFontSize * 0.72);
+            LabelFontSize = Math.Clamp(ring * 0.33, 9, 12); // uma linha só: dá para ser um pouco maior
             UpdateLayout();
         }
 

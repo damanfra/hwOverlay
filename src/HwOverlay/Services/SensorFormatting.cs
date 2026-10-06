@@ -104,6 +104,33 @@ public static class SensorFormatting
         return string.IsNullOrEmpty(unit) ? text : $"{text} {unit}";
     }
 
+    /// <summary>
+    /// Unidade que cabe dentro do mini-anel da barra de tarefas: °C → "°", unidades de até 2 letras
+    /// ficam como estão (%, W, GB...), as maiores (MHz, RPM...) somem — aparecem só na dica do mouse.
+    /// </summary>
+    public static string CompactUnit(string unit) =>
+        unit.StartsWith('°') ? "°"
+        : unit.Length <= 2 ? unit
+        : "";
+
+    private static readonly string[] RedundantSuffixes = ["Temp", "Temperatura", "Uso", "Carga", "Potência"];
+
+    /// <summary>
+    /// Rótulo curto automático: tira a última palavra quando ela só repete o que a unidade já diz
+    /// ("CPU Temp" → "CPU", com "°" no anel; "CPU Potência" → "CPU", com "W").
+    /// </summary>
+    public static string AutoShortLabel(string label)
+    {
+        label = label.Trim();
+        var space = label.LastIndexOf(' ');
+        if (space <= 0) return label;
+
+        var last = label[(space + 1)..];
+        return RedundantSuffixes.Contains(last, StringComparer.OrdinalIgnoreCase)
+            ? label[..space].TrimEnd(' ', '·')
+            : label;
+    }
+
     public static string FormatNumber(double value, int decimals) =>
         value.ToString("F" + Math.Clamp(decimals, 0, 3), Culture);
 

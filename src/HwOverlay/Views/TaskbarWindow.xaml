@@ -61,10 +61,6 @@
             <Setter Property="FontWeight" Value="SemiBold" />
         </Style>
 
-        <Style x:Key="UnitStyle" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="{Binding Palette.Muted, RelativeSource={RelativeSource AncestorType=Window}}" />
-            <Setter Property="FontSize" Value="{Binding LabelFontSize, RelativeSource={RelativeSource AncestorType=Window}}" />
-        </Style>
     </Window.Resources>
 
     <!-- Margem vertical: a "pílula" não encosta nas bordas da barra. -->
@@ -94,23 +90,37 @@
                 </ItemsControl.ItemsPanel>
                 <ItemsControl.ItemTemplate>
                     <DataTemplate DataType="{x:Type vm:GaugeViewModel}">
-                        <StackPanel Orientation="Horizontal" Margin="3,0" ToolTip="{Binding SensorName}">
+                        <StackPanel Orientation="Horizontal" Margin="3,0">
+                            <StackPanel.ToolTip>
+                                <TextBlock>
+                                    <Run Text="{Binding Label, Mode=OneWay}" FontWeight="SemiBold" />
+                                    <Run Text="{Binding ValueText, Mode=OneWay}" />
+                                    <Run Text="{Binding UnitText, Mode=OneWay}" />
+                                    <LineBreak />
+                                    <Run Text="{Binding SensorName, Mode=OneWay}" />
+                                </TextBlock>
+                            </StackPanel.ToolTip>
+
                             <Grid Width="{Binding RingSize, RelativeSource={RelativeSource AncestorType=Window}}"
                                   Height="{Binding RingSize, RelativeSource={RelativeSource AncestorType=Window}}">
                                 <views:MiniArc Fraction="{Binding Fraction}" Style="{StaticResource ArcStyle}" />
+                                <!-- Valor + unidade compacta ("42°", "7%", "5W") dentro do anel. -->
                                 <TextBlock HorizontalAlignment="Center"
                                            VerticalAlignment="Center"
                                            Margin="0,1,0,0"
-                                           Text="{Binding ValueText}"
-                                           Style="{StaticResource ValueStyle}" />
+                                           Style="{StaticResource ValueStyle}">
+                                    <Run Text="{Binding ValueText, Mode=OneWay}" /><Run
+                                        Text="{Binding CompactUnitText, Mode=OneWay}"
+                                        FontWeight="Normal"
+                                        FontSize="{Binding UnitFontSize, RelativeSource={RelativeSource AncestorType=Window}}" />
+                                </TextBlock>
                             </Grid>
-                            <StackPanel VerticalAlignment="Center" Margin="3,0,2,0">
-                                <TextBlock Text="{Binding Label}"
-                                           MaxWidth="64"
-                                           TextTrimming="CharacterEllipsis"
-                                           Style="{StaticResource LabelStyle}" />
-                                <TextBlock Text="{Binding UnitText}" Style="{StaticResource UnitStyle}" />
-                            </StackPanel>
+                            <TextBlock VerticalAlignment="Center"
+                                       Margin="4,0,2,0"
+                                       Text="{Binding TaskbarLabel}"
+                                       MaxWidth="64"
+                                       TextTrimming="CharacterEllipsis"
+                                       Style="{StaticResource LabelStyle}" />
                         </StackPanel>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>

@@ -36,6 +36,9 @@ public sealed class GaugeConfig
 
     public string Label { get; set; } = "";
 
+    /// <summary>Rótulo no modo barra de tarefas. Nulo = automático a partir de <see cref="Label"/>.</summary>
+    public string? ShortLabel { get; set; }
+
     public double Min { get; set; }
 
     public double Max { get; set; } = 100;
