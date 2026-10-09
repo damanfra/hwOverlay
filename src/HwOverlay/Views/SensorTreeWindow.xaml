@@ -428,8 +428,7 @@
                                 <TextBlock Grid.Row="3" Style="{StaticResource FieldLabel}" Text="Fundo" />
                                 <Slider Grid.Row="3" Grid.Column="1" Minimum="0" Maximum="1" SmallChange="0.05" LargeChange="0.1"
                                         Value="{Binding TaskbarBackgroundOpacity}"
-                                        IsEnabled="{Binding IsTaskbarSolidBackground}"
-                                        ToolTip="Só para o estilo sólido. Abaixo de 50% as cores dos textos acompanham o tema da barra (claro/escuro)." />
+                                        ToolTip="0% = fundo totalmente transparente (nos estilos afundados sobram só o contorno e a sombra). Abaixo de 50% as cores dos textos acompanham o tema da barra (claro/escuro)." />
                                 <TextBlock Grid.Row="3" Grid.Column="2" VerticalAlignment="Center" TextAlignment="Right"
                                            Text="{Binding TaskbarBackgroundOpacity, Converter={StaticResource Percent}}" />
 
