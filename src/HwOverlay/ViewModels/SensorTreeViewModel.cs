@@ -22,6 +22,9 @@ public sealed class SensorTreeViewModel : ObservableObject
     private bool _isLoading = true;
     private string? _errorText;
     private string? _feedback;
+    private string _updateStatus = "";
+    private bool _isCheckingUpdate;
+    private UpdateCheckResult? _availableUpdate;
 
     public SensorTreeViewModel(OverlayViewModel overlay, HardwareMonitorService monitor)
     {
@@ -40,6 +43,11 @@ public sealed class SensorTreeViewModel : ObservableObject
         OpenPawnIoSiteCommand = new RelayCommand(() => OpenUrl("https://pawnio.eu/"));
         CopyWingetCommand = new RelayCommand(() => CopyToClipboard("winget install namazso.PawnIO", "Comando copiado. Cole num terminal como administrador."));
         OpenSettingsFolderCommand = new RelayCommand(() => OpenUrl(SettingsService.Folder));
+        CheckUpdateCommand = new AsyncRelayCommand(CheckUpdateAsync, () => !IsCheckingUpdate);
+        OpenUpdateCommand = new RelayCommand(
+            () => OpenUrl(_availableUpdate?.DownloadUrl ?? _availableUpdate?.PageUrl ?? UpdateService.ReleasesPage),
+            () => _availableUpdate is not null);
+        OpenReleasesCommand = new RelayCommand(() => OpenUrl(UpdateService.ReleasesPage));
     }
 
     public OverlayViewModel Overlay { get; }
@@ -105,6 +113,72 @@ public sealed class SensorTreeViewModel : ObservableObject
     {
         get => _feedback;
         private set => SetProperty(ref _feedback, value);
+    }
+
+    // ---------- Atualização (manual: nada acontece sem o clique do usuário) ----------
+
+    public string CurrentVersionText => $"Versão {UpdateService.CurrentVersionText}";
+
+    public string UpdateStatus
+    {
+        get => _updateStatus;
+        private set => SetProperty(ref _updateStatus, value);
+    }
+
+    public bool IsCheckingUpdate
+    {
+        get => _isCheckingUpdate;
+        private set
+        {
+            if (SetProperty(ref _isCheckingUpdate, value))
+                CheckUpdateCommand.NotifyCanExecuteChanged();
+        }
+    }
+
+    public bool HasUpdate => _availableUpdate is not null;
+
+    public AsyncRelayCommand CheckUpdateCommand { get; }
+    public RelayCommand OpenUpdateCommand { get; }
+    public RelayCommand OpenReleasesCommand { get; }
+
+    private async Task CheckUpdateAsync()
+    {
+        IsCheckingUpdate = true;
+        SetAvailableUpdate(null);
+        UpdateStatus = "Verificando…";
+
+        try
+        {
+            var result = await UpdateService.CheckAsync();
+            if (result.IsNewer)
+            {
+                SetAvailableUpdate(result);
+                UpdateStatus = $"Nova versão disponível: {result.LatestVersion}. Baixe o .zip, feche o HwOverlay e substitua os arquivos.";
+            }
+            else
+            {
+                UpdateStatus = $"Você já está na versão mais recente ({UpdateService.CurrentVersionText}).";
+            }
+        }
+        catch (InvalidOperationException ex)
+        {
+            UpdateStatus = ex.Message;
+        }
+        catch (Exception ex)
+        {
+            UpdateStatus = $"Não foi possível verificar: {ex.Message}";
+        }
+        finally
+        {
+            IsCheckingUpdate = false;
+        }
+    }
+
+    private void SetAvailableUpdate(UpdateCheckResult? update)
+    {
+        _availableUpdate = update;
+        OnPropertyChanged(nameof(HasUpdate));
+        OpenUpdateCommand.NotifyCanExecuteChanged();
     }
 
     public RelayCommand AddSelectedCommand { get; }

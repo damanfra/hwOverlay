@@ -463,6 +463,25 @@
                                     Click="OpenTaskbarSettings_Click" />
                         </StackPanel>
                     </Border>
+
+                    <!-- Atualização (só verifica quando o botão é clicado) -->
+                    <Border Style="{StaticResource Card}">
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource CardTitle}" Text="Atualização" />
+                            <TextBlock Foreground="{StaticResource MutedBrush}" Text="{Binding CurrentVersionText}" />
+
+                            <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                <Button Content="Verificar atualização" Command="{Binding CheckUpdateCommand}" Margin="0,0,8,0" />
+                                <Button Content="Baixar nova versão" Command="{Binding OpenUpdateCommand}" Margin="0,0,8,0"
+                                        Visibility="{Binding HasUpdate, Converter={StaticResource BoolToVisibility}}" />
+                                <Button Content="Ver versões" Command="{Binding OpenReleasesCommand}" />
+                            </StackPanel>
+
+                            <TextBlock Margin="0,8,0,0" TextWrapping="Wrap" Foreground="{StaticResource MutedBrush}"
+                                       Text="{Binding UpdateStatus}"
+                                       Visibility="{Binding UpdateStatus, Converter={StaticResource NullToVisibility}}" />
+                        </StackPanel>
+                    </Border>
                 </StackPanel>
             </ScrollViewer>
         </Grid>
