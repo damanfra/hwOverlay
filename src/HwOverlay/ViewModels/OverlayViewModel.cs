@@ -301,6 +301,25 @@ public sealed class OverlayViewModel : ObservableObject
         }
     }
 
+    private bool? _startWithWindows;
+
+    /// <summary>Iniciar com o Windows (tarefa agendada elevada). O estado real vive no Agendador, não no settings.json.</summary>
+    public bool StartWithWindows
+    {
+        get => _startWithWindows ??= StartupService.IsEnabled();
+        set
+        {
+            if (StartWithWindows == value) return;
+            var error = StartupService.SetEnabled(value);
+            if (error is not null)
+                MessageBox.Show($"Não foi possível {(value ? "ativar" : "desativar")} o início com o Windows:\n\n{error}",
+                    "HwOverlay", MessageBoxButton.OK, MessageBoxImage.Warning);
+            else
+                _startWithWindows = value;
+            OnPropertyChanged();
+        }
+    }
+
     // ---------- Operações ----------
 
     public bool Contains(string sensorId) =>
