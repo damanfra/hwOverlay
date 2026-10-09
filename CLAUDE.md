@@ -29,6 +29,7 @@ src/HwOverlay
 │   ├── SensorFormatting       unidades, nomes de grupos pt-BR, faixas padrão por tipo
 │   ├── SettingsService        %AppData%\HwOverlay\settings.json (gravação com debounce)
 │   ├── EnvironmentStatus      admin + versão do PawnIO (aviso na janela de sensores)
+│   ├── StartupService         iniciar com o Windows: tarefa agendada elevada (schtasks) com `--minimizado`
 │   ├── OverlayWindowHelper    Win32: click-through (WS_EX_TRANSPARENT), fora do Alt+Tab, reforço de topmost
 │   ├── TaskbarLocator         Win32: retângulo da barra de tarefas e da bandeja, ocultação automática, tela cheia
 │   └── TrayIconService        ícone da bandeja (porta de volta quando o overlay está travado)
@@ -88,12 +89,13 @@ Notebook Positivo (placa DN50E-140H_I219V), Intel Core i7-1255U, GPU Intel Iris 
    1ª tentativa com gradiente + borda clara embaixo lia como botão saltado (capturas 07/08); a versão aprovada
    (`InsetSurface`) desenha interior liso, sombra interna em camadas na borda de cima e brilho de 1 px por fora, embaixo.
    Prévias visuais sem rodar o app (que exige admin): renderizar o mesmo desenho via WPF no PowerShell 5.1.
+6. Iniciar com o Windows (branch `feature/iniciar-com-windows`): checkbox em "Overlay". Como o app é elevado, usa tarefa
+   agendada (logon + 10 s, `HighestAvailable`, sem restrição de bateria) em vez da chave Run. O estado vem do Agendador
+   (`schtasks /Query`), não do settings.json. `--minimizado` pula a janela de sensores. Não testado reiniciando a sessão.
 
 ## Pendências / ideias
 
-- Modo barra de tarefas: testar visualmente; depois as outras opções — ícones vivos na bandeja (valor desenhado
-  no ícone) e `TaskbarItemInfo` (selo/progresso no ícone do app). Ainda falta: vários monitores, barra vertical (Win10),
   tema claro da barra.
 - Conferir visualmente o estilo "Ponteiro" (tamanhos de marcações calculados sem teste visual).
-- Talvez: iniciar com o Windows, atalho global para travar/destravar, mini-gráfico de histórico (sparkline) nos gauges,
+- Talvez: atalho global para travar/destravar, mini-gráfico de histórico (sparkline) nos gauges,
   temas de cor, publicar como single-file (`dotnet publish -r win-x64 --self-contained`).

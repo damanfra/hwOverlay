@@ -101,7 +101,9 @@ public partial class App : Application
 
         SyncOverlayVisibility();
 
-        if (settings.Settings.ShowSensorWindowOnStartup || !overlayVm.OverlayVisible)
+        // Iniciado pelo Windows (--minimizado): só bandeja/overlay, sem a janela de sensores.
+        var hidden = e.Args.Contains(StartupService.HiddenArgument, StringComparer.OrdinalIgnoreCase);
+        if (!hidden && (settings.Settings.ShowSensorWindowOnStartup || !overlayVm.OverlayVisible))
             ShowSensorWindow();
     }
 
