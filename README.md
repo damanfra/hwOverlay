@@ -80,3 +80,13 @@ src/HwOverlay
 
 A UI nunca toca nos objetos do LibreHardwareMonitor: o serviço atualiza o hardware numa thread
 própria e entrega um snapshot imutável, que a UI aplica no dispatcher.
+
+## Atualização e publicação
+
+- **Verificar atualização:** botão no card "Atualização" da janela de sensores. Só consulta as Releases do GitHub
+  quando clicado (nada automático, sem avisos); se houver versão nova, mostra o botão "Baixar nova versão".
+  Não instala sozinho: feche o app e substitua o `HwOverlay.exe` pelo do `.zip`.
+- **Publicar uma versão:** `git tag v0.2.0 && git push origin v0.2.0`. A Action `.github/workflows/release.yml`
+  compila (self-contained, arquivo único, win-x64), grava a versão da tag no executável e cria a Release com o `.zip`
+  e as notas geradas. Também roda manualmente em Actions → "Publicar versão". Tags `v1.0.0-beta` viram pré-lançamento
+  (e a verificação de atualização as ignora).

@@ -93,6 +93,10 @@ Notebook Positivo (placa DN50E-140H_I219V), Intel Core i7-1255U, GPU Intel Iris 
    agendada (logon + 10 s, `HighestAvailable`, sem restrição de bateria) em vez da chave Run. O estado vem do Agendador
    (`schtasks /Query`), não do settings.json. `--minimizado` pula a janela de sensores. Não testado reiniciando a sessão.
 
+7. Branch `feature/atualizacao`: `UpdateService` (GitHub Releases `/releases/latest`, só ao clicar em "Verificar atualização" no card
+   "Atualização"; sem checagem automática) + Action `release.yml` (tag `v*` → publish single-file self-contained → Release com .zip).
+   A versão em execução vem de `AssemblyInformationalVersion` (a Action passa `-p:Version` da tag; `Directory.Build.props` = 0.1.0). Action não testada no GitHub; o publish foi testado local (exe ~77 MB).
+
 ## Pendências / ideias
 
 - Modo barra de tarefas: testado e aprovado; falta acertar a cor do fundo (o usuário ainda não gostou). Ainda faltam

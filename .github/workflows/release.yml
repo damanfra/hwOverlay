@@ -1,0 +1,55 @@
+name: Publicar versão
+
+# Para publicar: git tag v0.2.0 && git push origin v0.2.0
+# Também dá para rodar manualmente (Actions → Publicar versão → Run workflow) informando a tag.
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag da versão (ex.: v0.2.0)'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  publicar:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Definir versão
+        shell: pwsh
+        run: |
+          $tag = if ('${{ github.event_name }}' -eq 'workflow_dispatch') { '${{ inputs.tag }}' } else { '${{ github.ref_name }}' }
+          if ($tag -notmatch '^v(\d+\.\d+\.\d+)(-[0-9A-Za-z.-]+)?$') { throw "Tag inválida: $tag (use vMAIOR.MENOR.PATCH)" }
+          "TAG=$tag" >> $env:GITHUB_ENV
+          "VERSION=$($Matches[1])$($Matches[2])" >> $env:GITHUB_ENV
+          "PRERELEASE=$([bool]$Matches[2])".ToLower() >> $env:GITHUB_ENV
+
+      - name: Publicar (self-contained, arquivo único)
+        run: >
+          dotnet publish src/HwOverlay/HwOverlay.csproj -c Release -r win-x64 --self-contained
+          -p:Version=${{ env.VERSION }}
+          -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true
+          -p:EnableCompressionInSingleFile=true -p:DebugType=None
+          -o out
+
+      - name: Compactar
+        shell: pwsh
+        run: Compress-Archive -Path out/* -DestinationPath "HwOverlay-${{ env.TAG }}-win-x64.zip"
+
+      - name: Criar release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $ghArgs = @($env:TAG, "HwOverlay-$($env:TAG)-win-x64.zip", '--title', "HwOverlay $($env:TAG)", '--generate-notes')
+          if ($env:PRERELEASE -eq 'true') { $ghArgs += '--prerelease' }
+          gh release create @ghArgs
