@@ -24,6 +24,10 @@ public sealed class InsetSurface : FrameworkElement
         nameof(Fill), typeof(Brush), typeof(InsetSurface),
         new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsRender));
 
+    public static readonly DependencyProperty FillOpacityProperty = DependencyProperty.Register(
+        nameof(FillOpacity), typeof(double), typeof(InsetSurface),
+        new FrameworkPropertyMetadata(1.0, FrameworkPropertyMetadataOptions.AffectsRender));
+
     public static readonly DependencyProperty ShadowColorProperty = DependencyProperty.Register(
         nameof(ShadowColor), typeof(Color), typeof(InsetSurface),
         new FrameworkPropertyMetadata(Color.FromArgb(0x60, 0, 0, 0), FrameworkPropertyMetadataOptions.AffectsRender));
@@ -43,6 +47,13 @@ public sealed class InsetSurface : FrameworkElement
     {
         get => (Brush?)GetValue(FillProperty);
         set => SetValue(FillProperty, value);
+    }
+
+    /// <summary>0..1: intensidade do interior. Em 0 o rebaixo fica transparente (só contorno e sombra).</summary>
+    public double FillOpacity
+    {
+        get => (double)GetValue(FillOpacityProperty);
+        set => SetValue(FillOpacityProperty, value);
     }
 
     /// <summary>Cor da sombra na borda de cima (o alfa é o máximo, junto à borda).</summary>
@@ -75,7 +86,12 @@ public sealed class InsetSurface : FrameworkElement
             dc.DrawGeometry(highlight, null, Geometry.Combine(below, bounds, GeometryCombineMode.Exclude, null));
         }
 
-        if (Fill is { } fill) dc.DrawGeometry(fill, null, bounds);
+        if (Fill is { } fill && FillOpacity > 0.001)
+        {
+            dc.PushOpacity(Math.Clamp(FillOpacity, 0, 1));
+            dc.DrawGeometry(fill, null, bounds);
+            dc.Pop();
+        }
 
         // Sombra interna: cada camada é "a forma menos um buraco" — buraco menor e mais deslocado para
         // baixo a cada camada. Junto à borda de cima todas as camadas se somam (sombra cheia); para dentro

@@ -75,6 +75,7 @@
         <Style x:Key="InsetBase" TargetType="views:InsetSurface">
             <Setter Property="Visibility" Value="Collapsed" />
             <Setter Property="Fill" Value="{Binding Palette.InsetFill, RelativeSource={RelativeSource AncestorType=Window}}" />
+            <Setter Property="FillOpacity" Value="{Binding DataContext.TaskbarBackgroundOpacity, RelativeSource={RelativeSource AncestorType=Window}}" />
             <Setter Property="ShadowColor" Value="{Binding Palette.InsetShadow, RelativeSource={RelativeSource AncestorType=Window}}" />
             <Setter Property="Highlight" Value="{Binding Palette.InsetHighlight, RelativeSource={RelativeSource AncestorType=Window}}" />
         </Style>
