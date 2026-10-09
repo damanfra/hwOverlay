@@ -95,7 +95,8 @@ Notebook Positivo (placa DN50E-140H_I219V), Intel Core i7-1255U, GPU Intel Iris 
 
 ## Pendências / ideias
 
-  tema claro da barra.
+- Modo barra de tarefas: testado e aprovado; falta acertar a cor do fundo (o usuário ainda não gostou). Ainda faltam
+  vários monitores e barra vertical (Win10). Opção 3 pendente: `TaskbarItemInfo` (selo/progresso no ícone do app).
 - Conferir visualmente o estilo "Ponteiro" (tamanhos de marcações calculados sem teste visual).
 - Talvez: atalho global para travar/destravar, mini-gráfico de histórico (sparkline) nos gauges,
   temas de cor, publicar como single-file (`dotnet publish -r win-x64 --self-contained`).
