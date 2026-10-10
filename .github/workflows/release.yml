@@ -1,15 +1,16 @@
 name: Publicar versão
 
-# Para publicar (a partir da main): git tag v0.2.0 && git push origin v0.2.0
-# Só publica se o commit da tag estiver na main; tag em outra branch falha sem criar release.
-# Também dá para rodar manualmente (Actions → Publicar versão → Run workflow) informando a tag.
+# Para publicar (a partir da main): git tag v0.3.0 && git push origin v0.3.0
+# Ou pelo site: Actions → Publicar versão → Run workflow (branch main) informando a tag. Se a tag ainda
+# não existir, ela é criada no commit atual da main; se já existir, publica o commit dela.
+# Só publica se o commit estiver na main; tag em outra branch falha sem criar release.
 on:
   push:
     tags: ['v*']
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Tag da versão (ex.: v0.2.0)'
+        description: 'Tag da versão (ex.: v0.3.0); criada na main se ainda não existir'
         required: true
 
 permissions:
@@ -21,27 +22,33 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref }}
           fetch-depth: 0
-
-      - name: Conferir se a tag está na main
-        shell: pwsh
-        run: |
-          git merge-base --is-ancestor HEAD origin/main
-          if ($LASTEXITCODE -ne 0) { throw "O commit da tag não está na main; publique só tags criadas na main." }
-
-      - uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: 8.0.x
 
       - name: Definir versão
         shell: pwsh
+        env:
+          TAG_INPUT: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
         run: |
-          $tag = if ('${{ github.event_name }}' -eq 'workflow_dispatch') { '${{ inputs.tag }}' } else { '${{ github.ref_name }}' }
+          $tag = $env:TAG_INPUT.Trim()
           if ($tag -notmatch '^v(\d+\.\d+\.\d+)(-[0-9A-Za-z.-]+)?$') { throw "Tag inválida: $tag (use vMAIOR.MENOR.PATCH)" }
           "TAG=$tag" >> $env:GITHUB_ENV
           "VERSION=$($Matches[1])$($Matches[2])" >> $env:GITHUB_ENV
           "PRERELEASE=$([bool]$Matches[2])".ToLower() >> $env:GITHUB_ENV
+
+          # Execução manual com tag já existente: publica o commit da tag, não o da branch escolhida.
+          git rev-parse -q --verify "refs/tags/$tag" | Out-Null
+          if ($LASTEXITCODE -eq 0) { git checkout -q $tag }
+          "TARGET=$(git rev-parse HEAD)" >> $env:GITHUB_ENV
+
+      - name: Conferir se o commit está na main
+        shell: pwsh
+        run: |
+          git merge-base --is-ancestor HEAD origin/main
+          if ($LASTEXITCODE -ne 0) { throw "O commit não está na main; publique só tags criadas na main." }
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
 
       - name: Publicar (self-contained, arquivo único)
         run: >
@@ -63,6 +70,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          $ghArgs = @($env:TAG, 'out/HwOverlay.exe', '--title', "HwOverlay $($env:TAG)", '--generate-notes')
+          # --target só vale quando a tag ainda não existe (execução manual): cria a tag nesse commit.
+          $ghArgs = @($env:TAG, 'out/HwOverlay.exe', '--target', $env:TARGET, '--title', "HwOverlay $($env:TAG)", '--generate-notes')
           if ($env:PRERELEASE -eq 'true') { $ghArgs += '--prerelease' }
           gh release create @ghArgs
