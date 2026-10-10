@@ -95,11 +95,19 @@ Notebook Positivo (placa DN50E-140H_I219V), Intel Core i7-1255U, GPU Intel Iris 
 
 7. Branch `feature/atualizacao`: `UpdateService` (GitHub Releases `/releases/latest`, só ao clicar em "Verificar atualização" no card
    "Atualização"; sem checagem automática) + Action `release.yml` (tag `v*` → publish single-file self-contained → Release com .zip).
-   A versão em execução vem de `AssemblyInformationalVersion` (a Action passa `-p:Version` da tag; `Directory.Build.props` = 0.1.0). Action testada no GitHub (v0.2.0 e v0.2.1 publicadas); exe ~77 MB.
+   A versão em execução vem de `AssemblyInformationalVersion` (a Action passa `-p:Version` da tag; `Directory.Build.props` = 0.1.0). Action testada no GitHub (v0.2.0 e v0.2.1 publicadas, ainda como .zip); exe ~77 MB.
    Para lançar: tag `vX.Y.Z` num commit da main e `git push origin vX.Y.Z` (sufixo `-beta` etc. vira pré-release). A Action recusa tag fora da main.
 
 8. Fundo transparente no modo barra: o controle "Fundo" passou a valer também nos estilos afundados (`InsetSurface.FillOpacity`);
    em 0% o interior some e sobram só contorno e sombra (Sólido a 0% = sem nada). Compilado, não conferido visualmente com o app rodando.
+
+9. Atualização automática (branch `claude/charming-dirac-flw8f6`): a release passa a ter só o `HwOverlay.exe` (sem .zip).
+   "Atualizar agora" baixa o exe para `HwOverlay.exe.novo`, confere tamanho e SHA-256 (`digest` da API do GitHub),
+   renomeia o exe em execução para `.antigo` (renomear é permitido, sobrescrever não), põe o novo no lugar e reinicia com
+   `--atualizado`; a nova instância espera o mutex da antiga (até 30 s), apaga o `.antigo` e reabre a janela de sensores.
+   Só no exe publicado (`Assembly.Location` vazio); em build de desenvolvimento abre a página da versão. Versões ≤ 0.2.1
+   procuram .zip, então a passagem para a primeira versão com isso é manual. Workflow `build.yml` compila a cada push.
+   Não testado com o app rodando (o container de desenvolvimento não tem .NET/Windows).
 
 ## Pendências / ideias
 

@@ -29,7 +29,11 @@ public partial class App : Application
     {
         base.OnStartup(e);
 
+        var updated = e.Args.Contains(UpdateService.UpdatedArgument, StringComparer.OrdinalIgnoreCase);
+
         _singleInstance = new Mutex(true, @"Local\HwOverlay.SingleInstance", out var isFirst);
+        // Logo após uma atualização a versão anterior ainda está encerrando: espera ela soltar o mutex.
+        if (!isFirst && updated) isFirst = WaitForPreviousInstance(_singleInstance);
         if (!isFirst)
         {
             MessageBox.Show("O HwOverlay já está aberto (veja o ícone na bandeja do sistema).", "HwOverlay",
@@ -39,6 +43,7 @@ public partial class App : Application
         }
 
         DispatcherUnhandledException += OnUnhandledException;
+        UpdateService.CleanupAfterUpdate();
 
         // Números com vírgula (pt-BR) nos campos de texto das bindings.
         FrameworkElement.LanguageProperty.OverrideMetadata(
@@ -54,6 +59,7 @@ public partial class App : Application
         var monitor = _monitor = new HardwareMonitorService();
         var overlayVm = _overlayVm = new OverlayViewModel(settings, monitor);
         var treeVm = _treeVm = new SensorTreeViewModel(overlayVm, monitor);
+        treeVm.RestartRequested += (_, _) => RestartForUpdate();
 
         _overlayWindow = new OverlayWindow(overlayVm);
         _overlayWindow.OpenSensorsRequested += (_, _) => ShowSensorWindow();
@@ -103,8 +109,43 @@ public partial class App : Application
 
         // Iniciado pelo Windows (--minimizado): só bandeja/overlay, sem a janela de sensores.
         var hidden = e.Args.Contains(StartupService.HiddenArgument, StringComparer.OrdinalIgnoreCase);
-        if (!hidden && (settings.Settings.ShowSensorWindowOnStartup || !overlayVm.OverlayVisible))
+        if (updated)
+        {
+            // Volta para onde o usuário estava (a atualização foi pedida na janela de sensores).
+            treeVm.ReportUpdated();
             ShowSensorWindow();
+        }
+        else if (!hidden && (settings.Settings.ShowSensorWindowOnStartup || !overlayVm.OverlayVisible))
+        {
+            ShowSensorWindow();
+        }
+    }
+
+    private static bool WaitForPreviousInstance(Mutex mutex)
+    {
+        try
+        {
+            return mutex.WaitOne(TimeSpan.FromSeconds(30));
+        }
+        catch (AbandonedMutexException)
+        {
+            return true; // a instância anterior saiu sem liberar: o mutex é nosso
+        }
+    }
+
+    private void RestartForUpdate()
+    {
+        try
+        {
+            UpdateService.Restart();
+        }
+        catch (Exception ex)
+        {
+            Log(ex);
+            MessageBox.Show($"A nova versão foi instalada, mas não foi possível reiniciar: {ex.Message}\n\nAbra o HwOverlay novamente.",
+                "HwOverlay", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+        ExitApp();
     }
 
     private void SyncOverlayVisibility()

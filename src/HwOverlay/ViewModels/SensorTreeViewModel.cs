@@ -24,6 +24,7 @@ public sealed class SensorTreeViewModel : ObservableObject
     private string? _feedback;
     private string _updateStatus = "";
     private bool _isCheckingUpdate;
+    private bool _isInstallingUpdate;
     private UpdateCheckResult? _availableUpdate;
 
     public SensorTreeViewModel(OverlayViewModel overlay, HardwareMonitorService monitor)
@@ -43,10 +44,8 @@ public sealed class SensorTreeViewModel : ObservableObject
         OpenPawnIoSiteCommand = new RelayCommand(() => OpenUrl("https://pawnio.eu/"));
         CopyWingetCommand = new RelayCommand(() => CopyToClipboard("winget install namazso.PawnIO", "Comando copiado. Cole num terminal como administrador."));
         OpenSettingsFolderCommand = new RelayCommand(() => OpenUrl(SettingsService.Folder));
-        CheckUpdateCommand = new AsyncRelayCommand(CheckUpdateAsync, () => !IsCheckingUpdate);
-        OpenUpdateCommand = new RelayCommand(
-            () => OpenUrl(_availableUpdate?.DownloadUrl ?? _availableUpdate?.PageUrl ?? UpdateService.ReleasesPage),
-            () => _availableUpdate is not null);
+        CheckUpdateCommand = new AsyncRelayCommand(CheckUpdateAsync, () => !IsCheckingUpdate && !IsInstallingUpdate);
+        InstallUpdateCommand = new AsyncRelayCommand(InstallUpdateAsync, () => _availableUpdate is not null && !IsInstallingUpdate);
         OpenReleasesCommand = new RelayCommand(() => OpenUrl(UpdateService.ReleasesPage));
     }
 
@@ -117,6 +116,9 @@ public sealed class SensorTreeViewModel : ObservableObject
 
     // ---------- Atualização (manual: nada acontece sem o clique do usuário) ----------
 
+    /// <summary>A nova versão já está no lugar do exe: o App reinicia (inicia a nova e encerra esta).</summary>
+    public event EventHandler? RestartRequested;
+
     public string CurrentVersionText => $"Versão {UpdateService.CurrentVersionText}";
 
     public string UpdateStatus
@@ -135,10 +137,23 @@ public sealed class SensorTreeViewModel : ObservableObject
         }
     }
 
+    public bool IsInstallingUpdate
+    {
+        get => _isInstallingUpdate;
+        private set
+        {
+            if (SetProperty(ref _isInstallingUpdate, value))
+            {
+                CheckUpdateCommand.NotifyCanExecuteChanged();
+                InstallUpdateCommand.NotifyCanExecuteChanged();
+            }
+        }
+    }
+
     public bool HasUpdate => _availableUpdate is not null;
 
     public AsyncRelayCommand CheckUpdateCommand { get; }
-    public RelayCommand OpenUpdateCommand { get; }
+    public AsyncRelayCommand InstallUpdateCommand { get; }
     public RelayCommand OpenReleasesCommand { get; }
 
     private async Task CheckUpdateAsync()
@@ -153,7 +168,7 @@ public sealed class SensorTreeViewModel : ObservableObject
             if (result.IsNewer)
             {
                 SetAvailableUpdate(result);
-                UpdateStatus = $"Nova versão disponível: {result.LatestVersion}. Baixe o .zip, feche o HwOverlay e substitua os arquivos.";
+                UpdateStatus = $"Nova versão disponível: {result.LatestVersion}. Clique em \"Atualizar agora\": o HwOverlay baixa, troca o executável e reinicia sozinho.";
             }
             else
             {
@@ -174,11 +189,44 @@ public sealed class SensorTreeViewModel : ObservableObject
         }
     }
 
+    private async Task InstallUpdateAsync()
+    {
+        if (_availableUpdate is not { } update) return;
+
+        // Sem exe na release (versões antigas publicavam .zip) ou rodando fora do exe publicado: abre a página.
+        if (update.Exe is null || !UpdateService.CanSelfUpdate)
+        {
+            OpenUrl(update.PageUrl);
+            UpdateStatus = update.Exe is null
+                ? "Esta versão não tem executável para atualização automática; baixe-o na página da versão."
+                : "Atualização automática só funciona no executável publicado (não em build de desenvolvimento).";
+            return;
+        }
+
+        IsInstallingUpdate = true;
+        UpdateStatus = "Baixando…";
+        try
+        {
+            var progress = new Progress<double>(p => UpdateStatus = $"Baixando… {p:P0}");
+            await UpdateService.InstallAsync(update.Exe, progress);
+            UpdateStatus = "Reiniciando na nova versão…";
+            RestartRequested?.Invoke(this, EventArgs.Empty);
+        }
+        catch (Exception ex)
+        {
+            UpdateStatus = $"Não foi possível atualizar: {ex.Message}";
+            IsInstallingUpdate = false;
+        }
+    }
+
+    /// <summary>Mensagem exibida pela nova instância logo após a atualização.</summary>
+    public void ReportUpdated() => UpdateStatus = $"Atualizado para a versão {UpdateService.CurrentVersionText}.";
+
     private void SetAvailableUpdate(UpdateCheckResult? update)
     {
         _availableUpdate = update;
         OnPropertyChanged(nameof(HasUpdate));
-        OpenUpdateCommand.NotifyCanExecuteChanged();
+        InstallUpdateCommand.NotifyCanExecuteChanged();
     }
 
     public RelayCommand AddSelectedCommand { get; }
