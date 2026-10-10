@@ -3,6 +3,7 @@ using System.IO;
 using System.Security;
 using System.Security.Principal;
 using System.Text;
+using System.Xml.Linq;
 
 namespace HwOverlay.Services;
 
@@ -18,6 +19,67 @@ public static class StartupService
     private const string TaskName = "HwOverlay";
 
     public static bool IsEnabled() => RunSchtasks($"/Query /TN \"{TaskName}\"").ExitCode == 0;
+
+    /// <summary>Executável que a tarefa abre (nulo se a tarefa não existe ou não deu para ler).</summary>
+    public static string? GetTaskCommand()
+    {
+        var query = RunSchtasks($"/Query /TN \"{TaskName}\" /XML");
+        if (query.ExitCode != 0) return null;
+        try
+        {
+            var command = XDocument.Parse(query.Output).Descendants().FirstOrDefault(e => e.Name.LocalName == "Command")?.Value;
+            return string.IsNullOrWhiteSpace(command) ? null : Environment.ExpandEnvironmentVariables(command.Trim().Trim('"'));
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// A tarefa guarda o caminho do exe de quando a opção foi ligada. Se o exe mudou de pasta (versão nova
+    /// baixada em outro lugar), o Windows tenta abrir o arquivo antigo e nada aparece. Recria apontando para
+    /// o exe atual. Retorna o caminho antigo quando corrigiu; nulo se não precisou (ou a tarefa não existe).
+    /// </summary>
+    public static string? RepairIfMoved()
+    {
+        var exe = Environment.ProcessPath;
+        if (string.IsNullOrEmpty(exe)) return null;
+
+        var command = GetTaskCommand();
+        if (command is null || string.Equals(Path.GetFullPath(command), Path.GetFullPath(exe), StringComparison.OrdinalIgnoreCase))
+            return null;
+
+        return SetEnabled(true) is null ? command : null;
+    }
+
+    /// <summary>
+    /// Última execução da tarefa pelo Windows, em texto para a tela. Nulo se a tarefa não existe.
+    /// Usa a saída CSV do schtasks /V: a ordem das colunas é fixa (os títulos mudam com o idioma).
+    /// </summary>
+    public static string? DescribeLastRun()
+    {
+        var query = RunSchtasks($"/Query /TN \"{TaskName}\" /V /FO CSV /NH");
+        if (query.ExitCode != 0) return null;
+
+        var line = query.Output.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).FirstOrDefault();
+        if (line is null) return null;
+
+        // "Host","Nome","Próxima execução","Status","Modo de logon","Última execução","Último resultado",...
+        var fields = line.Trim('"').Split("\",\"");
+        if (fields.Length < 7) return null;
+
+        var lastRun = fields[5];
+        if (!int.TryParse(fields[6], out var result)) return $"Última execução: {lastRun}.";
+
+        return result switch
+        {
+            0 => $"Última execução pelo Windows: {lastRun} (ok).",
+            0x41303 => "A tarefa ainda não foi executada pelo Windows (só roda no próximo logon).",
+            0x41301 => $"Em execução desde {lastRun}.",
+            _ => $"Última execução pelo Windows: {lastRun}, falhou (código 0x{result:X}).",
+        };
+    }
 
     /// <summary>Cria ou remove a tarefa. Retorna a mensagem de erro, ou nulo se deu certo.</summary>
     public static string? SetEnabled(bool enabled)

@@ -116,6 +116,12 @@ Notebook Positivo (placa DN50E-140H_I219V), Intel Core i7-1255U, GPU Intel Iris 
    sumir, cai no principal. Barra secundária não tem bandeja: âncora no `ClockButton` (Win10) ou área estimada de 2,5 × a altura
    da barra para o relógio (Win11). Troca de DPI entre monitores → `DpiChanged` recalcula. Não testado com 2 monitores.
 
+11. "Iniciar com o Windows" não abriu após reiniciar (v0.3.1, modo barra). Causa não confirmada; suspeita principal: a tarefa
+   guarda o caminho do exe de quando foi ligada (exe trocado de pasta → Windows tenta o arquivo antigo; a caixinha só confere
+   se a tarefa existe). v0.3.2: a cada início `StartupService.RepairIfMoved` compara o `<Command>` da tarefa (`schtasks /XML`)
+   com o exe atual e recria se diferente; o card mostra a última execução/resultado (`schtasks /V /FO CSV`, colunas 5 e 6);
+   `%AppData%\HwOverlay\inicio.log` registra cada início (versão, caminho, argumentos); exceções fora da UI vão para erros.log.
+
 ## Pendências / ideias
 
 - Modo barra de tarefas: testado e aprovado; fundo transparente tratado no item 8 (aguardando conferência do usuário). Ainda falta

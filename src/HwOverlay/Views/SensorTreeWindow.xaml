@@ -349,6 +349,9 @@
                             <CheckBox Content="Abrir esta janela ao iniciar" IsChecked="{Binding ShowSensorWindowOnStartup}" />
                             <CheckBox Content="Iniciar com o Windows (só na bandeja)" IsChecked="{Binding StartWithWindows}"
                                       ToolTip="Cria uma tarefa agendada que abre o HwOverlay no logon, já como administrador e sem a janela de sensores: só o ícone da bandeja e o overlay." />
+                            <TextBlock Margin="22,0,0,4" TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource MutedBrush}"
+                                       Text="{Binding StartWithWindowsStatus}"
+                                       Visibility="{Binding StartWithWindowsStatus, Converter={StaticResource NullToVisibility}}" />
 
                             <Grid Margin="0,10,0,0">
                                 <Grid.ColumnDefinitions>

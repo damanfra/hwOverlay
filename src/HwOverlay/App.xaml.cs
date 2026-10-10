@@ -43,6 +43,10 @@ public partial class App : Application
         }
 
         DispatcherUnhandledException += OnUnhandledException;
+        // Erros fora da thread de UI derrubam o app sem mensagem: ao menos ficam no erros.log.
+        AppDomain.CurrentDomain.UnhandledException += (_, args) => { if (args.ExceptionObject is Exception ex) Log(ex); };
+        TaskScheduler.UnobservedTaskException += (_, args) => Log(args.Exception);
+        LogStart(e.Args);
         UpdateService.CleanupAfterUpdate();
 
         // Números com vírgula (pt-BR) nos campos de texto das bindings.
@@ -107,6 +111,18 @@ public partial class App : Application
             treeVm.ReportError(ex);
         });
         monitor.Start();
+
+        // Tarefa de "Iniciar com o Windows" apontando para um exe em outra pasta: recria para o exe atual.
+        _ = Task.Run(StartupService.RepairIfMoved).ContinueWith(t =>
+        {
+            if (t.Result is not { } oldPath) return;
+            LogLine($"Tarefa de início com o Windows corrigida: apontava para {oldPath}");
+            Dispatcher.InvokeAsync(() =>
+            {
+                overlayVm.StartupRepairNote = $"Corrigido: a tarefa abria {oldPath}, que não é o executável atual.";
+                _ = overlayVm.RefreshStartupStatusAsync();
+            });
+        }, TaskContinuationOptions.OnlyOnRanToCompletion);
 
         SyncOverlayVisibility();
 
@@ -183,6 +199,8 @@ public partial class App : Application
             _sensorWindow.Closed += (_, _) => _sensorWindow = null;
         }
 
+        _ = _overlayVm?.RefreshStartupStatusAsync();
+
         // As barras secundárias podem ter aparecido depois (ex.: opção ligada no Windows com o app aberto).
         _overlayVm?.RefreshTaskbarMonitors();
 
@@ -222,6 +240,25 @@ public partial class App : Application
         MessageBox.Show($"Erro inesperado: {e.Exception.Message}\n\nDetalhes em {Path.Combine(SettingsService.Folder, "erros.log")}",
             "HwOverlay", MessageBoxButton.OK, MessageBoxImage.Warning);
         e.Handled = true;
+    }
+
+    /// <summary>Uma linha por início do app (para saber se o Windows chegou a abrir pelo logon).</summary>
+    private static void LogStart(string[] args) =>
+        LogLine($"Iniciado {UpdateService.CurrentVersionText} · {Environment.ProcessPath} · argumentos: {(args.Length == 0 ? "(nenhum)" : string.Join(" ", args))}");
+
+    private static void LogLine(string text)
+    {
+        try
+        {
+            Directory.CreateDirectory(SettingsService.Folder);
+            var path = Path.Combine(SettingsService.Folder, "inicio.log");
+            if (File.Exists(path) && new FileInfo(path).Length > 200_000) File.Delete(path); // não cresce para sempre
+            File.AppendAllText(path, $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {text}\n");
+        }
+        catch
+        {
+            // sem log, sem drama
+        }
     }
 
     private static void Log(Exception ex)

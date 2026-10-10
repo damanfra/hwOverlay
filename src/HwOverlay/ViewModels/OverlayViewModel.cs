@@ -338,6 +338,7 @@ public sealed class OverlayViewModel : ObservableObject
     }
 
     private bool? _startWithWindows;
+    private string? _startWithWindowsStatus;
 
     /// <summary>Iniciar com o Windows (tarefa agendada elevada). O estado real vive no Agendador, não no settings.json.</summary>
     public bool StartWithWindows
@@ -353,7 +354,38 @@ public sealed class OverlayViewModel : ObservableObject
             else
                 _startWithWindows = value;
             OnPropertyChanged();
+            _ = RefreshStartupStatusAsync();
         }
+    }
+
+    /// <summary>Diagnóstico da tarefa (última execução e resultado, correção de caminho). Nulo = nada a mostrar.</summary>
+    public string? StartWithWindowsStatus
+    {
+        get => _startWithWindowsStatus;
+        private set => SetProperty(ref _startWithWindowsStatus, value);
+    }
+
+    /// <summary>Aviso da correção feita no início do app (tarefa apontava para um exe em outra pasta).</summary>
+    public string? StartupRepairNote { get; set; }
+
+    /// <summary>Relê o estado da tarefa no Agendador (schtasks demora um pouco: fora da thread de UI).</summary>
+    public async Task RefreshStartupStatusAsync()
+    {
+        var (enabled, lastRun) = await Task.Run(() =>
+        {
+            var exists = StartupService.IsEnabled();
+            return (exists, exists ? StartupService.DescribeLastRun() : null);
+        });
+
+        if (_startWithWindows != enabled)
+        {
+            _startWithWindows = enabled;
+            OnPropertyChanged(nameof(StartWithWindows));
+        }
+
+        StartWithWindowsStatus = enabled
+            ? string.Join(" ", new[] { StartupRepairNote, lastRun }.Where(t => !string.IsNullOrEmpty(t)))
+            : null;
     }
 
     // ---------- Operações ----------
