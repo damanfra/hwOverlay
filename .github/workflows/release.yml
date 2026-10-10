@@ -1,6 +1,7 @@
 name: Publicar versão
 
-# Para publicar: git tag v0.2.0 && git push origin v0.2.0
+# Para publicar (a partir da main): git tag v0.2.0 && git push origin v0.2.0
+# Só publica se o commit da tag estiver na main; tag em outra branch falha sem criar release.
 # Também dá para rodar manualmente (Actions → Publicar versão → Run workflow) informando a tag.
 on:
   push:
@@ -19,6 +20,15 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref }}
+          fetch-depth: 0
+
+      - name: Conferir se a tag está na main
+        shell: pwsh
+        run: |
+          git merge-base --is-ancestor HEAD origin/main
+          if ($LASTEXITCODE -ne 0) { throw "O commit da tag não está na main; publique só tags criadas na main." }
 
       - uses: actions/setup-dotnet@v4
         with:

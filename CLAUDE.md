@@ -95,7 +95,8 @@ Notebook Positivo (placa DN50E-140H_I219V), Intel Core i7-1255U, GPU Intel Iris 
 
 7. Branch `feature/atualizacao`: `UpdateService` (GitHub Releases `/releases/latest`, só ao clicar em "Verificar atualização" no card
    "Atualização"; sem checagem automática) + Action `release.yml` (tag `v*` → publish single-file self-contained → Release com .zip).
-   A versão em execução vem de `AssemblyInformationalVersion` (a Action passa `-p:Version` da tag; `Directory.Build.props` = 0.1.0). Action não testada no GitHub; o publish foi testado local (exe ~77 MB).
+   A versão em execução vem de `AssemblyInformationalVersion` (a Action passa `-p:Version` da tag; `Directory.Build.props` = 0.1.0). Action testada no GitHub (v0.2.0 e v0.2.1 publicadas); exe ~77 MB.
+   Para lançar: tag `vX.Y.Z` num commit da main e `git push origin vX.Y.Z` (sufixo `-beta` etc. vira pré-release). A Action recusa tag fora da main.
 
 8. Fundo transparente no modo barra: o controle "Fundo" passou a valer também nos estilos afundados (`InsetSurface.FillOpacity`);
    em 0% o interior some e sobram só contorno e sombra (Sólido a 0% = sem nada). Compilado, não conferido visualmente com o app rodando.
