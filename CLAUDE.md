@@ -109,10 +109,17 @@ Notebook Positivo (placa DN50E-140H_I219V), Intel Core i7-1255U, GPU Intel Iris 
    procuram .zip, então a passagem para a primeira versão com isso é manual. Workflow `build.yml` compila a cada push.
    Não testado com o app rodando (o container de desenvolvimento não tem .NET/Windows).
 
+10. v0.3.0 publicada pelo "Run workflow" (o proxy do ambiente do Claude recusa push de tag: 403; a Action cria a tag na main
+   se ela não existir). Instalada pelo usuário e funcionando. Em seguida (v0.3.1): versão no título da janela de sensores e
+   escolha do monitor no modo barra. Barras extras são `Shell_SecondaryTrayWnd` (só existem com "Mostrar a barra em todas as
+   telas"); o monitor é guardado pelo nome do Windows (`\\.\DISPLAY2`, `AppSettings.TaskbarMonitor`; vazio = principal) e, se
+   sumir, cai no principal. Barra secundária não tem bandeja: âncora no `ClockButton` (Win10) ou área estimada de 2,5 × a altura
+   da barra para o relógio (Win11). Troca de DPI entre monitores → `DpiChanged` recalcula. Não testado com 2 monitores.
+
 ## Pendências / ideias
 
-- Modo barra de tarefas: testado e aprovado; fundo transparente tratado no item 8 (aguardando conferência do usuário). Ainda faltam
-  vários monitores e barra vertical (Win10). Opção 3 pendente: `TaskbarItemInfo` (selo/progresso no ícone do app).
+- Modo barra de tarefas: testado e aprovado; fundo transparente tratado no item 8 (aguardando conferência do usuário). Ainda falta
+  barra vertical (Win10); vários monitores no item 10 (aguardando teste). Opção 3 pendente: `TaskbarItemInfo` (selo/progresso no ícone do app).
 - Conferir visualmente o estilo "Ponteiro" (tamanhos de marcações calculados sem teste visual).
 - Talvez: atalho global para travar/destravar, mini-gráfico de histórico (sparkline) nos gauges,
   temas de cor, publicar como single-file (`dotnet publish -r win-x64 --self-contained`).

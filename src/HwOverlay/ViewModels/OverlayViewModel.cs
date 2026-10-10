@@ -200,6 +200,42 @@ public sealed class OverlayViewModel : ObservableObject
         }
     }
 
+    /// <summary>Monitor da barra (nome do Windows, ex.: \\.\DISPLAY2). Vazio = principal.</summary>
+    public string TaskbarMonitor
+    {
+        get => Settings.TaskbarMonitor;
+        set
+        {
+            // O ComboBox manda nulo enquanto a lista de opções é trocada: ignora.
+            if (value is null || Settings.TaskbarMonitor == value) return;
+            Settings.TaskbarMonitor = value;
+            OnPropertyChanged();
+            Save();
+        }
+    }
+
+    public IReadOnlyList<TaskbarMonitorOption> TaskbarMonitorOptions { get; private set; } = [];
+
+    /// <summary>Relê os monitores que têm barra de tarefas (ao abrir a janela de sensores e quando as telas mudam).</summary>
+    public void RefreshTaskbarMonitors()
+    {
+        var monitors = TaskbarLocator.ListMonitors();
+        var options = new List<TaskbarMonitorOption>();
+
+        var primary = monitors.FirstOrDefault(m => m.IsPrimary);
+        options.Add(new("", primary is null ? "Principal" : $"Principal (monitor {primary.Number} · {primary.Width}×{primary.Height})"));
+        foreach (var m in monitors.Where(m => !m.IsPrimary))
+            options.Add(new(m.Device, $"Monitor {m.Number} · {m.Width}×{m.Height}"));
+
+        // Escolhido antes mas sem barra agora (desconectado ou barra só no principal): continua na lista.
+        if (Settings.TaskbarMonitor != "" && options.All(o => o.Value != Settings.TaskbarMonitor))
+            options.Add(new(Settings.TaskbarMonitor, $"{Settings.TaskbarMonitor.TrimStart('\\', '.')} (sem barra agora: usando o principal)"));
+
+        TaskbarMonitorOptions = options;
+        OnPropertyChanged(nameof(TaskbarMonitorOptions));
+        OnPropertyChanged(nameof(TaskbarMonitor)); // reaplica a seleção na lista nova
+    }
+
     public static IReadOnlyList<TaskbarSideOption> TaskbarSideOptions { get; } =
     [
         new(TaskbarSide.Right, "Direita (junto à bandeja)"),
@@ -437,5 +473,7 @@ public sealed class OverlayViewModel : ObservableObject
 }
 
 public sealed record TaskbarSideOption(TaskbarSide Value, string Name);
+
+public sealed record TaskbarMonitorOption(string Value, string Name);
 
 public sealed record TaskbarBackgroundStyleOption(TaskbarBackgroundStyle Value, string Name);

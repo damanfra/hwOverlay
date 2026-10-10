@@ -60,6 +60,8 @@ public partial class TaskbarWindow : Window
 
         SourceInitialized += (_, _) => OverlayWindowHelper.ApplyToolWindowStyle(this);
         SizeChanged += (_, _) => UpdatePlacement();
+        // Mudar para um monitor com outra escala: recalcula tamanho e posição na escala nova.
+        DpiChanged += (_, _) => Dispatcher.InvokeAsync(UpdatePlacement);
 
         _vm.PropertyChanged += OnViewModelPropertyChanged;
 
@@ -166,7 +168,7 @@ public partial class TaskbarWindow : Window
 
     private void Place()
     {
-        var info = TaskbarLocator.Find();
+        var info = TaskbarLocator.Find(_vm.TaskbarMonitor);
         if (info is null || !info.IsHorizontal || info.IsHidden || TaskbarLocator.IsFullscreenAppRunning())
         {
             if (IsVisible) Hide();
@@ -219,7 +221,8 @@ public partial class TaskbarWindow : Window
 
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName is nameof(OverlayViewModel.TaskbarSide) or nameof(OverlayViewModel.TaskbarOffset))
+        if (e.PropertyName is nameof(OverlayViewModel.TaskbarSide) or nameof(OverlayViewModel.TaskbarOffset)
+            or nameof(OverlayViewModel.TaskbarMonitor))
             UpdatePlacement();
         else if (e.PropertyName is nameof(OverlayViewModel.TaskbarBackgroundOpacity) or nameof(OverlayViewModel.TaskbarBackgroundStyle))
             UpdatePalette();

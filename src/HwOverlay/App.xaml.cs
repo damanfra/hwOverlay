@@ -59,6 +59,9 @@ public partial class App : Application
         var monitor = _monitor = new HardwareMonitorService();
         var overlayVm = _overlayVm = new OverlayViewModel(settings, monitor);
         var treeVm = _treeVm = new SensorTreeViewModel(overlayVm, monitor);
+        overlayVm.RefreshTaskbarMonitors();
+        // Monitor conectado/desconectado ou resolução trocada: atualiza a lista de monitores da barra.
+        Microsoft.Win32.SystemEvents.DisplaySettingsChanged += OnDisplaySettingsChanged;
         treeVm.RestartRequested += (_, _) => RestartForUpdate();
 
         _overlayWindow = new OverlayWindow(overlayVm);
@@ -148,6 +151,9 @@ public partial class App : Application
         ExitApp();
     }
 
+    private void OnDisplaySettingsChanged(object? sender, EventArgs e) =>
+        Dispatcher.InvokeAsync(() => _overlayVm?.RefreshTaskbarMonitors());
+
     private void SyncOverlayVisibility()
     {
         if (_overlayWindow is null || _taskbarWindow is null || _overlayVm is null) return;
@@ -177,6 +183,9 @@ public partial class App : Application
             _sensorWindow.Closed += (_, _) => _sensorWindow = null;
         }
 
+        // As barras secundárias podem ter aparecido depois (ex.: opção ligada no Windows com o app aberto).
+        _overlayVm?.RefreshTaskbarMonitors();
+
         // Preenche a árvore imediatamente com a última leitura, sem esperar o próximo ciclo.
         if (_monitor?.Latest is { } latest) _treeVm.ApplySnapshot(latest);
 
@@ -199,6 +208,7 @@ public partial class App : Application
 
     protected override void OnExit(ExitEventArgs e)
     {
+        Microsoft.Win32.SystemEvents.DisplaySettingsChanged -= OnDisplaySettingsChanged;
         _settings?.SaveNow();
         _trayGauges?.Dispose();
         _tray?.Dispose();

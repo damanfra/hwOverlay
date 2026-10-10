@@ -88,6 +88,9 @@ public sealed class AppSettings
 
     public TaskbarSide TaskbarSide { get; set; } = TaskbarSide.Right;
 
+    /// <summary>Monitor cuja barra recebe os mini-gauges (ex.: \\.\DISPLAY2). Vazio = monitor principal.</summary>
+    public string TaskbarMonitor { get; set; } = "";
+
     /// <summary>Distância (DIPs) entre os mini-gauges e a ponta escolhida da barra (bandeja ou borda esquerda).</summary>
     public double TaskbarOffset { get; set; } = 8;
 
