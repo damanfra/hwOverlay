@@ -121,6 +121,8 @@ public sealed class SensorTreeViewModel : ObservableObject
 
     public string CurrentVersionText => $"Versão {UpdateService.CurrentVersionText}";
 
+    public string WindowTitle => $"HwOverlay {UpdateService.CurrentVersionText} — Sensores";
+
     public string UpdateStatus
     {
         get => _updateStatus;

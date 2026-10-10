@@ -6,7 +6,7 @@
         xmlns:vm="clr-namespace:HwOverlay.ViewModels"
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance Type=vm:SensorTreeViewModel}"
-        Title="HwOverlay — Sensores"
+        Title="{Binding WindowTitle}"
         Width="1180" Height="760"
         MinWidth="900" MinHeight="520"
         WindowStartupLocation="CenterScreen"
@@ -416,35 +416,46 @@
                                     <RowDefinition Height="30" />
                                     <RowDefinition Height="30" />
                                     <RowDefinition Height="30" />
+                                    <RowDefinition Height="30" />
                                 </Grid.RowDefinitions>
 
-                                <TextBlock Grid.Row="2" Style="{StaticResource FieldLabel}" Text="Estilo do fundo" />
-                                <ComboBox Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" Margin="0,3"
+                                <TextBlock Grid.Row="0" Style="{StaticResource FieldLabel}" Text="Monitor" />
+                                <ComboBox Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2" Margin="0,3"
+                                          ItemsSource="{Binding TaskbarMonitorOptions}"
+                                          DisplayMemberPath="Name" SelectedValuePath="Value"
+                                          SelectedValue="{Binding TaskbarMonitor}"
+                                          ToolTip="Em qual barra de tarefas ficam os mini-gauges. Os outros monitores só aparecem aqui com &quot;Mostrar minha barra de tarefas em todas as telas&quot; ligado nas configurações do Windows." />
+
+                                <TextBlock Grid.Row="3" Style="{StaticResource FieldLabel}" Text="Estilo do fundo" />
+                                <ComboBox Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="2" Margin="0,3"
                                           ItemsSource="{x:Static vm:OverlayViewModel.TaskbarBackgroundStyleOptions}"
                                           DisplayMemberPath="Name" SelectedValuePath="Value"
                                           SelectedValue="{Binding TaskbarBackgroundStyle}"
                                           ToolTip="Afundado: contorno com sombra interna, como se os gauges estivessem num rebaixo da barra." />
 
-                                <TextBlock Grid.Row="3" Style="{StaticResource FieldLabel}" Text="Fundo" />
-                                <Slider Grid.Row="3" Grid.Column="1" Minimum="0" Maximum="1" SmallChange="0.05" LargeChange="0.1"
+                                <TextBlock Grid.Row="4" Style="{StaticResource FieldLabel}" Text="Fundo" />
+                                <Slider Grid.Row="4" Grid.Column="1" Minimum="0" Maximum="1" SmallChange="0.05" LargeChange="0.1"
                                         Value="{Binding TaskbarBackgroundOpacity}"
                                         ToolTip="0% = fundo totalmente transparente (nos estilos afundados sobram só o contorno e a sombra). Abaixo de 50% as cores dos textos acompanham o tema da barra (claro/escuro)." />
-                                <TextBlock Grid.Row="3" Grid.Column="2" VerticalAlignment="Center" TextAlignment="Right"
+                                <TextBlock Grid.Row="4" Grid.Column="2" VerticalAlignment="Center" TextAlignment="Right"
                                            Text="{Binding TaskbarBackgroundOpacity, Converter={StaticResource Percent}}" />
 
-                                <TextBlock Grid.Row="0" Style="{StaticResource FieldLabel}" Text="Posição" />
-                                <ComboBox Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2" Margin="0,3"
+                                <TextBlock Grid.Row="1" Style="{StaticResource FieldLabel}" Text="Posição" />
+                                <ComboBox Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Margin="0,3"
                                           ItemsSource="{x:Static vm:OverlayViewModel.TaskbarSideOptions}"
                                           DisplayMemberPath="Name" SelectedValuePath="Value"
                                           SelectedValue="{Binding TaskbarSide}" />
 
-                                <TextBlock Grid.Row="1" Style="{StaticResource FieldLabel}" Text="Distância" />
-                                <Slider Grid.Row="1" Grid.Column="1" Minimum="0" Maximum="1200" SmallChange="4" LargeChange="40"
+                                <TextBlock Grid.Row="2" Style="{StaticResource FieldLabel}" Text="Distância" />
+                                <Slider Grid.Row="2" Grid.Column="1" Minimum="0" Maximum="1200" SmallChange="4" LargeChange="40"
                                         Value="{Binding TaskbarOffset}"
                                         ToolTip="Distância até a bandeja (ou até a borda esquerda). Também dá para arrastar os mini-gauges para os lados." />
-                                <TextBlock Grid.Row="1" Grid.Column="2" VerticalAlignment="Center" TextAlignment="Right"
+                                <TextBlock Grid.Row="2" Grid.Column="2" VerticalAlignment="Center" TextAlignment="Right"
                                            Text="{Binding TaskbarOffset, StringFormat={}{0:0} px}" />
                             </Grid>
+
+                            <TextBlock Margin="0,8,0,0" TextWrapping="Wrap" Foreground="{StaticResource MutedBrush}"
+                                       Text="Outro monitor não aparece na lista? Ative &quot;Mostrar minha barra de tarefas em todas as telas&quot; em Configurações → Personalização → Barra de tarefas → Comportamentos da barra de tarefas." />
                         </StackPanel>
                     </Border>
 
