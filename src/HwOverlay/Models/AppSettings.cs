@@ -41,6 +41,19 @@ public enum TaskbarBackgroundStyle
     InsetPerGauge,
 }
 
+/// <summary>Como um gauge entra nos grupos do modo barra de tarefas.</summary>
+public enum TaskbarGroupMode
+{
+    /// <summary>Junto do anterior se for do mesmo componente (CPU, GPU...).</summary>
+    Auto,
+
+    /// <summary>Sempre no mesmo grupo do gauge anterior.</summary>
+    WithPrevious,
+
+    /// <summary>Sempre começa um grupo novo.</summary>
+    NewGroup,
+}
+
 /// <summary>Configuração de um gauge do overlay (persistida em settings.json).</summary>
 public sealed class GaugeConfig
 {
@@ -71,6 +84,9 @@ public sealed class GaugeConfig
 
     /// <summary>Vira um ícone com o valor na bandeja (quando os ícones da bandeja estão ligados).</summary>
     public bool ShowInTray { get; set; } = true;
+
+    /// <summary>Agrupamento no modo barra de tarefas (quando o agrupamento está ligado).</summary>
+    public TaskbarGroupMode TaskbarGroup { get; set; }
 }
 
 public sealed class AppSettings
@@ -98,6 +114,12 @@ public sealed class AppSettings
     public double TaskbarBackgroundOpacity { get; set; }
 
     public TaskbarBackgroundStyle TaskbarBackgroundStyle { get; set; } = TaskbarBackgroundStyle.Solid;
+
+    /// <summary>
+    /// Agrupa gauges vizinhos do mesmo componente: divisória entre grupos na faixa e um rebaixo por grupo
+    /// no estilo "um por grupo". Desligado = cada gauge é um grupo, sem divisórias.
+    /// </summary>
+    public bool TaskbarGrouping { get; set; } = true;
 
     /// <summary>Um ícone por gauge na bandeja do sistema, com o valor desenhado nele.</summary>
     public bool TrayIconsEnabled { get; set; }

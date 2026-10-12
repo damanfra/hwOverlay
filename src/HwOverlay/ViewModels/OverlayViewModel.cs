@@ -30,6 +30,7 @@ public sealed class OverlayViewModel : ObservableObject
             Gauges.Add(CreateGauge(config));
 
         Gauges.CollectionChanged += OnGaugesChanged;
+        RebuildTaskbarGroups();
 
         RemoveSelectedCommand = new RelayCommand(RemoveSelected, () => SelectedGauge is not null);
         MoveUpCommand = new RelayCommand(() => Move(-1), () => SelectedGauge is not null && Gauges.IndexOf(SelectedGauge) > 0);
@@ -43,6 +44,9 @@ public sealed class OverlayViewModel : ObservableObject
     private AppSettings Settings => _settingsService.Settings;
 
     public ObservableCollection<GaugeViewModel> Gauges { get; } = [];
+
+    /// <summary>Os mesmos gauges, em grupos, para o modo barra de tarefas.</summary>
+    public ObservableCollection<GaugeGroupViewModel> TaskbarGroups { get; } = [];
 
     public GaugeViewModel? SelectedGauge
     {
@@ -280,9 +284,28 @@ public sealed class OverlayViewModel : ObservableObject
             Settings.TaskbarBackgroundStyle = value;
             OnPropertyChanged();
             OnPropertyChanged(nameof(IsTaskbarSolidBackground));
+            OnPropertyChanged(nameof(ShowTaskbarGroupDividers));
             Save();
         }
     }
+
+    /// <summary>Agrupar gauges vizinhos do mesmo componente (CPU, GPU...) na barra.</summary>
+    public bool TaskbarGrouping
+    {
+        get => Settings.TaskbarGrouping;
+        set
+        {
+            if (Settings.TaskbarGrouping == value) return;
+            Settings.TaskbarGrouping = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(ShowTaskbarGroupDividers));
+            RebuildTaskbarGroups();
+            Save();
+        }
+    }
+
+    /// <summary>Divisória entre grupos: só nos estilos de faixa única (no "um por grupo" o próprio rebaixo separa).</summary>
+    public bool ShowTaskbarGroupDividers => TaskbarGrouping && TaskbarBackgroundStyle != TaskbarBackgroundStyle.InsetPerGauge;
 
     /// <summary>A opacidade do fundo só vale para o estilo sólido.</summary>
     public bool IsTaskbarSolidBackground => TaskbarBackgroundStyle == TaskbarBackgroundStyle.Solid;
@@ -291,7 +314,7 @@ public sealed class OverlayViewModel : ObservableObject
     [
         new(TaskbarBackgroundStyle.Solid, "Sólido"),
         new(TaskbarBackgroundStyle.Inset, "Afundado (faixa única)"),
-        new(TaskbarBackgroundStyle.InsetPerGauge, "Afundado (um por gauge)"),
+        new(TaskbarBackgroundStyle.InsetPerGauge, "Afundado (um por grupo)"),
     ];
 
     /// <summary>Mesmo alfa mínimo de 1/255 do overlay: sem ele não daria para arrastar nem abrir o menu.</summary>
@@ -438,7 +461,11 @@ public sealed class OverlayViewModel : ObservableObject
     private GaugeViewModel CreateGauge(GaugeConfig config)
     {
         var gauge = new GaugeViewModel(config, Settings.GaugeSize);
-        gauge.ConfigChanged += (_, _) => Save();
+        gauge.ConfigChanged += (_, _) =>
+        {
+            RebuildTaskbarGroups(); // o modo de grupo do gauge pode ter mudado
+            Save();
+        };
         if (_lastSnapshot is not null)
             gauge.Update(_lastSnapshot.SensorsById.GetValueOrDefault(config.SensorId));
         return gauge;
@@ -494,11 +521,43 @@ public sealed class OverlayViewModel : ObservableObject
     {
         // Mantém a lista persistida na mesma ordem da tela.
         Settings.Gauges = Gauges.Select(g => g.Config).ToList();
+        RebuildTaskbarGroups();
 
         OnPropertyChanged(nameof(HasGauges));
         OnPropertyChanged(nameof(EffectiveColumns));
         GaugesChanged?.Invoke(this, EventArgs.Empty);
         Save();
+    }
+
+    /// <summary>
+    /// Refaz os grupos da barra. Só troca a coleção quando a divisão muda, para a barra não recriar
+    /// os mini-gauges à toa (ConfigChanged também vem de edições de rótulo, faixa...).
+    /// </summary>
+    private void RebuildTaskbarGroups()
+    {
+        var groups = new List<List<GaugeViewModel>>();
+        GaugeViewModel? previous = null;
+        foreach (var gauge in Gauges)
+        {
+            var together = previous is not null && TaskbarGrouping && gauge.TaskbarGroup switch
+            {
+                TaskbarGroupMode.WithPrevious => true,
+                TaskbarGroupMode.NewGroup => false,
+                _ => string.Equals(gauge.HardwareKey, previous.HardwareKey, StringComparison.OrdinalIgnoreCase),
+            };
+
+            if (together) groups[^1].Add(gauge);
+            else groups.Add([gauge]);
+            previous = gauge;
+        }
+
+        var unchanged = groups.Count == TaskbarGroups.Count
+            && groups.Zip(TaskbarGroups).All(p => p.First.SequenceEqual(p.Second.Gauges));
+        if (unchanged) return;
+
+        TaskbarGroups.Clear();
+        for (var i = 0; i < groups.Count; i++)
+            TaskbarGroups.Add(new GaugeGroupViewModel(groups[i], isFirst: i == 0));
     }
 
     private void Save() => _settingsService.RequestSave();

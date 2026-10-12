@@ -35,7 +35,7 @@ src/HwOverlay
 │   └── TrayIconService        ícone da bandeja (porta de volta quando o overlay está travado)
 ├── ViewModels/                TreeNodes (árvore), SensorTreeViewModel, OverlayViewModel, GaugeViewModel
 ├── Views/                     SensorTreeWindow, OverlayWindow, GaugeView,
-│                              TaskbarWindow + MiniArc (modo ultra compacto sobre a barra de tarefas)
+│                              TaskbarWindow + MiniArc/MiniThermometer/MiniTurbine (modo ultra compacto sobre a barra)
 └── Themes/Dark.xaml           paleta e estilos (fundo #12161C, destaque #3DDC97)
 ```
 
@@ -121,6 +121,14 @@ Notebook Positivo (placa DN50E-140H_I219V), Intel Core i7-1255U, GPU Intel Iris 
    se a tarefa existe). v0.3.2: a cada início `StartupService.RepairIfMoved` compara o `<Command>` da tarefa (`schtasks /XML`)
    com o exe atual e recria se diferente; o card mostra a última execução/resultado (`schtasks /V /FO CSV`, colunas 5 e 6);
    `%AppData%\HwOverlay\inicio.log` registra cada início (versão, caminho, argumentos); exceções fora da UI vão para erros.log.
+
+12. Branch `claude/stoic-pasteur-s2m090`: ícone por tipo no modo barra (opção "B" das prévias aprovada): temperatura =
+   termômetro que enche com o valor ao lado (`MiniThermometer`), ventoinha (Fan/Control) = anel de 12 pás inclinadas
+   (`MiniTurbine`), o resto = arco (`MiniArc`); os três herdam de `MiniIndicator` (um estilo de cores só). Valores ≥ 1000
+   viram milhar na barra ("2090" → "2,1k"). Agrupamento (`AppSettings.TaskbarGrouping`, padrão ligado): gauges vizinhos
+   do mesmo componente (ID do sensor sem "/tipo/índice") formam um grupo; `GaugeConfig.TaskbarGroup` força junto/separado.
+   Faixa única → divisória de 1 px entre grupos; "Afundado (um por grupo)" (antigo "um por gauge") → um rebaixo por grupo.
+   Compilado só pelo CI; prévias desenhadas em SVG (sem o app rodando).
 
 ## Pendências / ideias
 

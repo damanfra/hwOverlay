@@ -21,7 +21,7 @@
 
     <Window.Resources>
         <!-- Cores por estado, vindas da paleta da janela (clara/escura conforme a barra). -->
-        <Style x:Key="ArcStyle" TargetType="views:MiniArc">
+        <Style x:Key="IndicatorStyle" TargetType="views:MiniIndicator">
             <Setter Property="Stroke" Value="{Binding Palette.Accent, RelativeSource={RelativeSource AncestorType=Window}}" />
             <Setter Property="Track" Value="{Binding Palette.Track, RelativeSource={RelativeSource AncestorType=Window}}" />
             <Setter Property="Thickness" Value="{Binding RingThickness, RelativeSource={RelativeSource AncestorType=Window}}" />
@@ -89,8 +89,8 @@
             </Style.Triggers>
         </Style>
 
-        <!-- Um rebaixo por gauge. -->
-        <Style x:Key="ItemInset" TargetType="views:InsetSurface" BasedOn="{StaticResource InsetBase}">
+        <!-- Um rebaixo por grupo (sem agrupamento, cada gauge é um grupo). -->
+        <Style x:Key="GroupInset" TargetType="views:InsetSurface" BasedOn="{StaticResource InsetBase}">
             <Style.Triggers>
                 <DataTrigger Binding="{Binding DataContext.TaskbarBackgroundStyle, RelativeSource={RelativeSource AncestorType=Window}}" Value="InsetPerGauge">
                     <Setter Property="Visibility" Value="Visible" />
@@ -98,9 +98,9 @@
             </Style.Triggers>
         </Style>
 
-        <!-- Espaço entre gauges e, no estilo por gauge, a folga entre o rebaixo e o conteúdo. -->
-        <Style x:Key="ItemStyle" TargetType="Grid">
-            <Setter Property="Margin" Value="3,0" />
+        <!-- No estilo por grupo: espaço entre os rebaixos e folga entre o rebaixo e o conteúdo. -->
+        <Style x:Key="GroupStyle" TargetType="Grid">
+            <Setter Property="Margin" Value="0" />
             <Style.Triggers>
                 <DataTrigger Binding="{Binding DataContext.TaskbarBackgroundStyle, RelativeSource={RelativeSource AncestorType=Window}}" Value="InsetPerGauge">
                     <Setter Property="Margin" Value="2,0" />
@@ -108,12 +108,27 @@
             </Style.Triggers>
         </Style>
 
-        <Style x:Key="ItemContentStyle" TargetType="StackPanel">
+        <Style x:Key="GroupContentStyle" TargetType="ItemsControl">
             <Setter Property="Margin" Value="0" />
             <Style.Triggers>
                 <DataTrigger Binding="{Binding DataContext.TaskbarBackgroundStyle, RelativeSource={RelativeSource AncestorType=Window}}" Value="InsetPerGauge">
-                    <Setter Property="Margin" Value="3,3,5,3" />
+                    <Setter Property="Margin" Value="0,3,2,3" />
                 </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Divisória antes de cada grupo (menos o primeiro), nos estilos de faixa única. -->
+        <Style x:Key="DividerStyle" TargetType="Rectangle">
+            <Setter Property="Visibility" Value="Collapsed" />
+            <Setter Property="Fill" Value="{Binding Palette.Track, RelativeSource={RelativeSource AncestorType=Window}}" />
+            <Style.Triggers>
+                <MultiDataTrigger>
+                    <MultiDataTrigger.Conditions>
+                        <Condition Binding="{Binding IsFirst}" Value="False" />
+                        <Condition Binding="{Binding DataContext.ShowTaskbarGroupDividers, RelativeSource={RelativeSource AncestorType=Window}}" Value="True" />
+                    </MultiDataTrigger.Conditions>
+                    <Setter Property="Visibility" Value="Visible" />
+                </MultiDataTrigger>
             </Style.Triggers>
         </Style>
 
@@ -139,49 +154,93 @@
         <Grid>
             <views:InsetSurface Style="{StaticResource StripInset}" />
 
-            <ItemsControl ItemsSource="{Binding Gauges}" VerticalAlignment="Center" Margin="4,0">
+            <ItemsControl ItemsSource="{Binding TaskbarGroups}" VerticalAlignment="Center" Margin="4,0">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
                         <StackPanel Orientation="Horizontal" />
                     </ItemsPanelTemplate>
                 </ItemsControl.ItemsPanel>
                 <ItemsControl.ItemTemplate>
-                    <DataTemplate DataType="{x:Type vm:GaugeViewModel}">
-                        <Grid Style="{StaticResource ItemStyle}">
-                            <views:InsetSurface Style="{StaticResource ItemInset}" />
-                            <StackPanel Orientation="Horizontal" Style="{StaticResource ItemContentStyle}">
-                                <StackPanel.ToolTip>
-                                    <TextBlock>
-                                        <Run Text="{Binding Label, Mode=OneWay}" FontWeight="SemiBold" />
-                                        <Run Text="{Binding ValueText, Mode=OneWay}" />
-                                        <Run Text="{Binding UnitText, Mode=OneWay}" />
-                                        <LineBreak />
-                                        <Run Text="{Binding SensorName, Mode=OneWay}" />
-                                    </TextBlock>
-                                </StackPanel.ToolTip>
-    
-                                <Grid Width="{Binding RingSize, RelativeSource={RelativeSource AncestorType=Window}}"
-                                      Height="{Binding RingSize, RelativeSource={RelativeSource AncestorType=Window}}">
-                                    <views:MiniArc Fraction="{Binding Fraction}" Style="{StaticResource ArcStyle}" />
-                                    <!-- Valor + unidade compacta ("42°", "7%", "5W") dentro do anel. -->
-                                    <TextBlock HorizontalAlignment="Center"
-                                               VerticalAlignment="Center"
-                                               Margin="0,1,0,0"
-                                               Style="{StaticResource ValueStyle}">
-                                        <Run Text="{Binding ValueText, Mode=OneWay}" /><Run
-                                            Text="{Binding CompactUnitText, Mode=OneWay}"
-                                            FontWeight="Normal"
-                                            FontSize="{Binding UnitFontSize, RelativeSource={RelativeSource AncestorType=Window}}" />
-                                    </TextBlock>
-                                </Grid>
-                                <TextBlock VerticalAlignment="Center"
-                                           Margin="4,0,2,0"
-                                           Text="{Binding TaskbarLabel}"
-                                           MaxWidth="64"
-                                           TextTrimming="CharacterEllipsis"
-                                           Style="{StaticResource LabelStyle}" />
-                            </StackPanel>
-                        </Grid>
+                    <DataTemplate DataType="{x:Type vm:GaugeGroupViewModel}">
+                        <StackPanel Orientation="Horizontal">
+                            <Rectangle Width="1" Margin="3,3" Style="{StaticResource DividerStyle}" />
+                            <Grid Style="{StaticResource GroupStyle}">
+                                <views:InsetSurface Style="{StaticResource GroupInset}" />
+                                <ItemsControl ItemsSource="{Binding Gauges}" Style="{StaticResource GroupContentStyle}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <StackPanel Orientation="Horizontal" />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate DataType="{x:Type vm:GaugeViewModel}">
+                                            <StackPanel Orientation="Horizontal" Margin="3,0">
+                                                <StackPanel.ToolTip>
+                                                    <TextBlock>
+                                                        <Run Text="{Binding Label, Mode=OneWay}" FontWeight="SemiBold" />
+                                                        <Run Text="{Binding ValueText, Mode=OneWay}" />
+                                                        <Run Text="{Binding UnitText, Mode=OneWay}" />
+                                                        <LineBreak />
+                                                        <Run Text="{Binding SensorName, Mode=OneWay}" />
+                                                    </TextBlock>
+                                                </StackPanel.ToolTip>
+
+                                                <!-- Arco (uso etc.) ou turbina (ventoinhas), com o valor + unidade compacta dentro. -->
+                                                <Grid x:Name="RingPart"
+                                                      Width="{Binding RingSize, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                      Height="{Binding RingSize, RelativeSource={RelativeSource AncestorType=Window}}">
+                                                    <views:MiniArc x:Name="Arc" Fraction="{Binding Fraction}" Style="{StaticResource IndicatorStyle}" />
+                                                    <views:MiniTurbine x:Name="Turbine" Visibility="Collapsed"
+                                                                       Fraction="{Binding Fraction}" Style="{StaticResource IndicatorStyle}" />
+                                                    <TextBlock HorizontalAlignment="Center"
+                                                               VerticalAlignment="Center"
+                                                               Margin="0,1,0,0"
+                                                               Style="{StaticResource ValueStyle}">
+                                                        <Run Text="{Binding TaskbarValueText, Mode=OneWay}" /><Run
+                                                            Text="{Binding TaskbarUnitText, Mode=OneWay}"
+                                                            FontWeight="Normal"
+                                                            FontSize="{Binding UnitFontSize, RelativeSource={RelativeSource AncestorType=Window}}" />
+                                                    </TextBlock>
+                                                </Grid>
+
+                                                <!-- Temperatura: termômetro com o valor ao lado. -->
+                                                <StackPanel x:Name="ThermometerPart" Orientation="Horizontal" Visibility="Collapsed"
+                                                            MinWidth="{Binding RingSize, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                            Height="{Binding RingSize, RelativeSource={RelativeSource AncestorType=Window}}">
+                                                    <views:MiniThermometer Fraction="{Binding Fraction}" Style="{StaticResource IndicatorStyle}"
+                                                                           Width="{Binding ThermometerWidth, RelativeSource={RelativeSource AncestorType=Window}}" />
+                                                    <TextBlock VerticalAlignment="Center"
+                                                               Margin="1,1,0,0"
+                                                               Style="{StaticResource ValueStyle}">
+                                                        <Run Text="{Binding TaskbarValueText, Mode=OneWay}" /><Run
+                                                            Text="{Binding TaskbarUnitText, Mode=OneWay}"
+                                                            FontWeight="Normal"
+                                                            FontSize="{Binding UnitFontSize, RelativeSource={RelativeSource AncestorType=Window}}" />
+                                                    </TextBlock>
+                                                </StackPanel>
+
+                                                <TextBlock VerticalAlignment="Center"
+                                                           Margin="4,0,2,0"
+                                                           Text="{Binding TaskbarLabel}"
+                                                           MaxWidth="64"
+                                                           TextTrimming="CharacterEllipsis"
+                                                           Style="{StaticResource LabelStyle}" />
+                                            </StackPanel>
+                                            <DataTemplate.Triggers>
+                                                <DataTrigger Binding="{Binding TaskbarIcon}" Value="{x:Static vm:TaskbarIcon.Turbine}">
+                                                    <Setter TargetName="Arc" Property="Visibility" Value="Collapsed" />
+                                                    <Setter TargetName="Turbine" Property="Visibility" Value="Visible" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding TaskbarIcon}" Value="{x:Static vm:TaskbarIcon.Thermometer}">
+                                                    <Setter TargetName="RingPart" Property="Visibility" Value="Collapsed" />
+                                                    <Setter TargetName="ThermometerPart" Property="Visibility" Value="Visible" />
+                                                </DataTrigger>
+                                            </DataTemplate.Triggers>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </Grid>
+                        </StackPanel>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>

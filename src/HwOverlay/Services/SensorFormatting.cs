@@ -134,6 +134,13 @@ public static class SensorFormatting
     public static string FormatNumber(double value, int decimals) =>
         value.ToString("F" + Math.Clamp(decimals, 0, 3), Culture);
 
+    /// <summary>Em milhares, sem o "k": 2090 → "2,1", 12500 → "13" (uma casa só abaixo de 10 mil).</summary>
+    public static string FormatThousands(double value)
+    {
+        var k = value / 1000;
+        return Math.Abs(k) < 9.95 ? k.ToString("F1", Culture) : k.ToString("F0", Culture);
+    }
+
     /// <summary>Configuração inicial razoável de gauge para um sensor.</summary>
     public static GaugeConfig CreateGaugeConfig(SensorSnapshot sensor, string? label = null)
     {

@@ -273,6 +273,7 @@
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
                             <Grid.Resources>
                                 <Style TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
@@ -332,7 +333,14 @@
                             <TextBox Grid.Row="9" Grid.Column="1" Text="{Binding Unit, TargetNullValue=''}"
                                      ToolTip="Vazio = unidade padrão do sensor (°C, %, MHz...)." />
 
-                            <CheckBox Grid.Row="10" Grid.Column="1" Margin="0,6,0,0" Content="Mostrar na bandeja"
+                            <TextBlock Grid.Row="10" Style="{StaticResource FieldLabel}" Text="Grupo na barra" />
+                            <ComboBox Grid.Row="10" Grid.Column="1" Margin="0,3"
+                                      ItemsSource="{x:Static vm:GaugeViewModel.TaskbarGroupOptions}"
+                                      DisplayMemberPath="Name" SelectedValuePath="Value"
+                                      SelectedValue="{Binding TaskbarGroup}"
+                                      ToolTip="Modo barra de tarefas, com &quot;Agrupar por componente&quot; ligado. Automático: fica junto do gauge anterior quando os dois são do mesmo componente (ex.: CPU temperatura + CPU uso)." />
+
+                            <CheckBox Grid.Row="11" Grid.Column="1" Margin="0,6,0,0" Content="Mostrar na bandeja"
                                       IsChecked="{Binding ShowInTray}"
                                       ToolTip="Vira um ícone com o valor quando os ícones na bandeja estão ligados." />
                         </Grid>
@@ -456,6 +464,11 @@
                                 <TextBlock Grid.Row="2" Grid.Column="2" VerticalAlignment="Center" TextAlignment="Right"
                                            Text="{Binding TaskbarOffset, StringFormat={}{0:0} px}" />
                             </Grid>
+
+                            <CheckBox Margin="0,6,0,0" Content="Agrupar por componente (CPU, GPU...)"
+                                      IsEnabled="{Binding IsTaskbarMode}"
+                                      IsChecked="{Binding TaskbarGrouping}"
+                                      ToolTip="Gauges vizinhos do mesmo componente formam um grupo: divisória entre grupos na faixa única e um rebaixo por grupo no estilo &quot;um por grupo&quot;. A ordem vem da lista de gauges; dá para forçar em &quot;Grupo na barra&quot; ao editar um gauge." />
 
                             <TextBlock Margin="0,8,0,0" TextWrapping="Wrap" Foreground="{StaticResource MutedBrush}"
                                        Text="Outro monitor não aparece na lista? Ative &quot;Mostrar minha barra de tarefas em todas as telas&quot; em Configurações → Personalização → Barra de tarefas → Comportamentos da barra de tarefas." />

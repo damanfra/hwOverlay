@@ -4,28 +4,25 @@ using System.Windows.Media;
 namespace HwOverlay.Views;
 
 /// <summary>
-/// Arco de 270° desenhado direto no WPF (mesmo formato do gauge "Arco"), para os mini-gauges
-/// da barra de tarefas — bem mais leve que um gráfico do LiveCharts por item.
+/// Base dos mini-indicadores da barra de tarefas (arco, termômetro, turbina): fração 0..1 e cores.
+/// Um estilo só (TargetType = MiniIndicator) serve aos três.
 /// </summary>
-public sealed class MiniArc : FrameworkElement
+public abstract class MiniIndicator : FrameworkElement
 {
-    private const double StartAngle = 135; // canto inferior esquerdo (y cresce para baixo)
-    private const double Sweep = 270;
-
     public static readonly DependencyProperty FractionProperty = DependencyProperty.Register(
-        nameof(Fraction), typeof(double), typeof(MiniArc),
+        nameof(Fraction), typeof(double), typeof(MiniIndicator),
         new FrameworkPropertyMetadata(0.0, FrameworkPropertyMetadataOptions.AffectsRender));
 
     public static readonly DependencyProperty StrokeProperty = DependencyProperty.Register(
-        nameof(Stroke), typeof(Brush), typeof(MiniArc),
+        nameof(Stroke), typeof(Brush), typeof(MiniIndicator),
         new FrameworkPropertyMetadata(Brushes.White, FrameworkPropertyMetadataOptions.AffectsRender));
 
     public static readonly DependencyProperty TrackProperty = DependencyProperty.Register(
-        nameof(Track), typeof(Brush), typeof(MiniArc),
+        nameof(Track), typeof(Brush), typeof(MiniIndicator),
         new FrameworkPropertyMetadata(new SolidColorBrush(Color.FromArgb(40, 255, 255, 255)), FrameworkPropertyMetadataOptions.AffectsRender));
 
     public static readonly DependencyProperty ThicknessProperty = DependencyProperty.Register(
-        nameof(Thickness), typeof(double), typeof(MiniArc),
+        nameof(Thickness), typeof(double), typeof(MiniIndicator),
         new FrameworkPropertyMetadata(4.0, FrameworkPropertyMetadataOptions.AffectsRender));
 
     public double Fraction
@@ -51,6 +48,16 @@ public sealed class MiniArc : FrameworkElement
         get => (double)GetValue(ThicknessProperty);
         set => SetValue(ThicknessProperty, value);
     }
+}
+
+/// <summary>
+/// Arco de 270° desenhado direto no WPF (mesmo formato do gauge "Arco"), para os mini-gauges
+/// da barra de tarefas — bem mais leve que um gráfico do LiveCharts por item.
+/// </summary>
+public sealed class MiniArc : MiniIndicator
+{
+    private const double StartAngle = 135; // canto inferior esquerdo (y cresce para baixo)
+    private const double Sweep = 270;
 
     protected override void OnRender(DrawingContext dc)
     {
