@@ -131,7 +131,8 @@ Notebook Positivo (placa DN50E-140H_I219V), Intel Core i7-1255U, GPU Intel Iris 
    Compilado só pelo CI; prévias desenhadas em SVG (sem o app rodando).
    Tela cheia por monitor: jogo em tela cheia no monitor 1 escondia os gauges da barra do monitor 2 (o
    `SHQueryUserNotificationState` é global). Agora só some se a janela em primeiro plano estiver no monitor da barra.
-   Tudo isso foi para a main e saiu na v0.4.0 (Run workflow). Aguardando o teste do usuário.
+   Tudo isso foi para a main e saiu na v0.4.0 (Run workflow). Ícones + grupos aprovados pelo usuário rodando no app
+   ("ficou bacana", estilo afundado um por grupo, barra clara). Tela cheia em outro monitor ainda sem confirmação.
 
 ## Pendências / ideias
 
