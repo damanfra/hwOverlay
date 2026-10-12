@@ -23,6 +23,19 @@ public enum GaugeState
     Critical,
 }
 
+/// <summary>Forma do mini-gauge na barra de tarefas, conforme o tipo do sensor.</summary>
+public enum TaskbarIcon
+{
+    /// <summary>Arco de 270° (uso, potência, clocks e o resto).</summary>
+    Ring,
+
+    /// <summary>Termômetro que enche, com o valor ao lado (temperaturas).</summary>
+    Thermometer,
+
+    /// <summary>Anel de pás de turbina (ventoinhas: RPM e controle PWM).</summary>
+    Turbine,
+}
+
 /// <summary>
 /// Um "relógio" do overlay. Monta as séries do LiveCharts2 (arco ou ponteiro) a partir do
 /// <see cref="GaugeConfig"/> e as atualiza a cada leitura do sensor.
@@ -151,6 +164,39 @@ public sealed class GaugeViewModel : ObservableObject
         set => SetConfig(_config.ShowInTray, value, v => _config.ShowInTray = v, rebuild: false);
     }
 
+    public TaskbarGroupMode TaskbarGroup
+    {
+        get => _config.TaskbarGroup;
+        set => SetConfig(_config.TaskbarGroup, value, v => _config.TaskbarGroup = v, rebuild: false);
+    }
+
+    public static IReadOnlyList<TaskbarGroupOption> TaskbarGroupOptions { get; } =
+    [
+        new(TaskbarGroupMode.Auto, "Automático (mesmo componente)"),
+        new(TaskbarGroupMode.WithPrevious, "Junto do anterior"),
+        new(TaskbarGroupMode.NewGroup, "Começa um grupo novo"),
+    ];
+
+    /// <summary>
+    /// Componente do sensor, tirado do próprio ID do LHM (ID do hardware + "/tipo/índice"):
+    /// "/intelcpu/0/temperature/12" → "/intelcpu/0". Não depende de leitura.
+    /// </summary>
+    public string HardwareKey
+    {
+        get
+        {
+            var id = _config.SensorId.TrimEnd('/');
+            for (var i = 0; i < 2; i++)
+            {
+                var slash = id.LastIndexOf('/');
+                if (slash <= 0) break;
+                id = id[..slash];
+            }
+
+            return id;
+        }
+    }
+
     public static IReadOnlyList<StyleOption> StyleOptions { get; } =
     [
         new(GaugeStyle.Arc, "Arco"),
@@ -189,6 +235,22 @@ public sealed class GaugeViewModel : ObservableObject
 
     /// <summary>Unidade abreviada para caber dentro do mini-anel da barra de tarefas.</summary>
     public string CompactUnitText => SensorFormatting.CompactUnit(UnitText);
+
+    /// <summary>Valor na barra de tarefas: de 1000 para cima vira milhar ("2090" → "2,1" + "k") para caber no anel.</summary>
+    public string TaskbarValueText => Value is { } v && Math.Abs(v) >= 1000
+        ? SensorFormatting.FormatThousands(v)
+        : ValueText;
+
+    public string TaskbarUnitText => Value is { } v && Math.Abs(v) >= 1000
+        ? "k" + CompactUnitText
+        : CompactUnitText;
+
+    public TaskbarIcon TaskbarIcon => _sensorType switch
+    {
+        SensorType.Temperature => TaskbarIcon.Thermometer,
+        SensorType.Fan or SensorType.Control => TaskbarIcon.Turbine,
+        _ => TaskbarIcon.Ring,
+    };
 
     public GaugeState State
     {
@@ -253,11 +315,14 @@ public sealed class GaugeViewModel : ObservableObject
                 _sensorType = sensor.Type;
                 OnPropertyChanged(nameof(UnitText));
                 OnPropertyChanged(nameof(CompactUnitText));
+                OnPropertyChanged(nameof(TaskbarIcon));
             }
         }
 
         ApplyValue();
         OnPropertyChanged(nameof(ValueText));
+        OnPropertyChanged(nameof(TaskbarValueText));
+        OnPropertyChanged(nameof(TaskbarUnitText));
     }
 
     private void ApplyValue()
@@ -394,6 +459,8 @@ public sealed class GaugeViewModel : ObservableObject
         OnPropertyChanged(nameof(ValueText));
         OnPropertyChanged(nameof(UnitText));
         OnPropertyChanged(nameof(CompactUnitText));
+        OnPropertyChanged(nameof(TaskbarValueText));
+        OnPropertyChanged(nameof(TaskbarUnitText));
 
         ConfigChanged?.Invoke(this, EventArgs.Empty);
     }
@@ -414,3 +481,5 @@ public sealed class GaugeViewModel : ObservableObject
 }
 
 public sealed record StyleOption(GaugeStyle Value, string Name);
+
+public sealed record TaskbarGroupOption(TaskbarGroupMode Value, string Name);

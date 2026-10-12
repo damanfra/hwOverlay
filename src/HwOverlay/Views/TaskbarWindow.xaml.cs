@@ -24,6 +24,9 @@ public partial class TaskbarWindow : Window
     public static readonly DependencyProperty RingThicknessProperty =
         DependencyProperty.Register(nameof(RingThickness), typeof(double), typeof(TaskbarWindow), new PropertyMetadata(3.5));
 
+    public static readonly DependencyProperty ThermometerWidthProperty =
+        DependencyProperty.Register(nameof(ThermometerWidth), typeof(double), typeof(TaskbarWindow), new PropertyMetadata(14.0));
+
     public static readonly DependencyProperty ValueFontSizeProperty =
         DependencyProperty.Register(nameof(ValueFontSize), typeof(double), typeof(TaskbarWindow), new PropertyMetadata(12.0));
 
@@ -100,6 +103,13 @@ public partial class TaskbarWindow : Window
         set => SetValue(RingThicknessProperty, value);
     }
 
+    /// <summary>Largura do termômetro dos gauges de temperatura (o valor vai ao lado dele).</summary>
+    public double ThermometerWidth
+    {
+        get => (double)GetValue(ThermometerWidthProperty);
+        set => SetValue(ThermometerWidthProperty, value);
+    }
+
     public double ValueFontSize
     {
         get => (double)GetValue(ValueFontSizeProperty);
@@ -169,7 +179,7 @@ public partial class TaskbarWindow : Window
     private void Place()
     {
         var info = TaskbarLocator.Find(_vm.TaskbarMonitor);
-        if (info is null || !info.IsHorizontal || info.IsHidden || TaskbarLocator.IsFullscreenAppRunning())
+        if (info is null || !info.IsHorizontal || info.IsHidden || TaskbarLocator.IsFullscreenAppRunning(info.Bounds))
         {
             if (IsVisible) Hide();
             return;
@@ -191,6 +201,7 @@ public partial class TaskbarWindow : Window
             var ring = Math.Clamp(heightDip - 14, 20, 40);
             RingSize = ring;
             RingThickness = Math.Max(2.5, ring * 0.1);
+            ThermometerWidth = ring * 0.4;
             ValueFontSize = Math.Max(9, ring * 0.34);
             UnitFontSize = Math.Max(7, ValueFontSize * 0.72);
             LabelFontSize = Math.Clamp(ring * 0.33, 9, 12); // uma linha só: dá para ser um pouco maior
