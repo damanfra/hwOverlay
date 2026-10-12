@@ -122,11 +122,21 @@ public static class TaskbarLocator
         return int.TryParse(digits, out var n) ? n : 0;
     }
 
-    /// <summary>App em tela cheia (jogo, vídeo, apresentação): a barra some, os mini-gauges também.</summary>
-    public static bool IsFullscreenAppRunning()
+    /// <summary>
+    /// App em tela cheia (jogo, vídeo, apresentação) no monitor desta barra: a barra some, os mini-gauges também.
+    /// O SHQueryUserNotificationState não diz em qual monitor está a tela cheia (jogo no monitor 1 escondia os
+    /// gauges da barra do monitor 2); quem decide é o monitor da janela em primeiro plano, que é a de tela cheia.
+    /// </summary>
+    public static bool IsFullscreenAppRunning(PixelRect taskbarBounds)
     {
         if (SHQueryUserNotificationState(out var state) != 0) return false;
-        return state is QUNS_BUSY or QUNS_RUNNING_D3D_FULL_SCREEN or QUNS_PRESENTATION_MODE;
+        if (state is not (QUNS_BUSY or QUNS_RUNNING_D3D_FULL_SCREEN or QUNS_PRESENTATION_MODE)) return false;
+
+        var foreground = GetForegroundWindow();
+        if (foreground == IntPtr.Zero) return true; // sem como saber o monitor: some, como antes
+
+        var bar = new RECT { Left = taskbarBounds.Left, Top = taskbarBounds.Top, Right = taskbarBounds.Right, Bottom = taskbarBounds.Bottom };
+        return MonitorFromWindow(foreground, MONITOR_DEFAULTTONEAREST) == MonitorFromRect(ref bar, MONITOR_DEFAULTTONEAREST);
     }
 
     /// <summary>
@@ -194,6 +204,12 @@ public static class TaskbarLocator
 
     [DllImport("user32.dll")]
     private static extern IntPtr MonitorFromWindow(IntPtr hwnd, uint dwFlags);
+
+    [DllImport("user32.dll")]
+    private static extern IntPtr MonitorFromRect(ref RECT lprc, uint dwFlags);
+
+    [DllImport("user32.dll")]
+    private static extern IntPtr GetForegroundWindow();
 
     [DllImport("user32.dll", EntryPoint = "GetMonitorInfoW", CharSet = CharSet.Unicode)]
     [return: MarshalAs(UnmanagedType.Bool)]

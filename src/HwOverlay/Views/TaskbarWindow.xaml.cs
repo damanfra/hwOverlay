@@ -179,7 +179,7 @@ public partial class TaskbarWindow : Window
     private void Place()
     {
         var info = TaskbarLocator.Find(_vm.TaskbarMonitor);
-        if (info is null || !info.IsHorizontal || info.IsHidden || TaskbarLocator.IsFullscreenAppRunning())
+        if (info is null || !info.IsHorizontal || info.IsHidden || TaskbarLocator.IsFullscreenAppRunning(info.Bounds))
         {
             if (IsVisible) Hide();
             return;
