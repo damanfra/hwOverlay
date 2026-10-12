@@ -133,7 +133,8 @@ Notebook Positivo (placa DN50E-140H_I219V), Intel Core i7-1255U, GPU Intel Iris 
    `SHQueryUserNotificationState` é global). Agora só some se a janela em primeiro plano estiver no monitor da barra.
    Tudo isso foi para a main e saiu na v0.4.0 (Run workflow). Ícones + grupos aprovados pelo usuário rodando no app
    ("ficou bacana", estilo afundado um por grupo, barra clara). Tela cheia em outro monitor confirmada pelo usuário.
-   Relato em aberto: "a tela toda pisca" ao clicar na barra (provável troca de foco do jogo em tela cheia; não investigado).
+   "A tela toda pisca" ao clicar na barra com jogo aberto: era o jogo em tela cheia exclusiva perdendo o foco (confirmado; não é do app).
+   v0.4.0 em uso pelo usuário por alguns dias antes de novas mudanças.
 
 ## Pendências / ideias
 
